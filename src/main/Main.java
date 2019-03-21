@@ -7,10 +7,62 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 public class Main {
 
     public static void main(String[] args) throws Exception {
+        /*
+
+        HashMap<String,Integer> buttons = new HashMap<>();
+        buttons.put("Мои заказы",-1);
+        buttons.put("Сделать заказ", -1);
+        buttons.put("О нас", -1);
+        buttons.put("Сотрудничество", -1);
+
+        PostWorkDataGenerator.generateForm("/", "Домашняя страница" +
+                "\nЗдесь вы можете посмотреть статус, сделать новый заказ" +
+                "\nИ связаться с нами",buttons);
+
+        buttons = new HashMap<>();
+        buttons.put("Назад",-1);
+        PostWorkDataGenerator.generateForm("/make", "Выберете предмет:",buttons);
+
+        buttons = new HashMap<>();
+        buttons.put("Назад",-1);
+        PostWorkDataGenerator.generateForm("/make", "Выберете предмет:",buttons);
+*/
+/*
+
+
+        PostWorkController.loadWork();
+
+        PostWorkData data = PostWorkController.getData("/");
+        List<PostWorkData> data_children = PostWorkController.getChildren("/");
+
+
+        System.out.println(data.getIURI()+" - " + data.getDescription());
+        for (PostWorkData child : data_children) {
+            System.out.println("\t" + child.getIURI() + " - " + child.getDescription()+" ["+child.getFileName()+"]");
+            if(child.hasParams())
+                for (Pair<String,Integer> pair: child.getParams())
+                    System.out.println("\t\t" + child.getIURI()+"/"+pair.getFirst() + " - " + pair.getSecond());
+        }
+
+        data = PostWorkController.getData(data_children.get(0).getIURI());
+        data_children = PostWorkController.getChildren(data.getIURI());
+
+
+        System.out.println(data.getIURI()+" - " + data.getDescription());
+        for (PostWorkData child : data_children) {
+            System.out.println("\t" + child.getIURI() + " - " + child.getDescription()+" ["+child.getFileName()+"]");
+            if(child.hasParams())
+                for (Pair<String,Integer> pair: child.getParams())
+                    System.out.println("\t\t" + child.getIURI()+"/"+pair.getFirst() + " - " + pair.getSecond());
+        }
+
+*/
+
+
         Log.setShowLevel(Log.EVERYTHING);
         ApiContextInitializer.init();
         DataClass dataClass = new DataClass();
-        MyClass bot = new MyClass(dataClass);
+        MakeLabs_bot bot = new MakeLabs_bot(dataClass);
         TelegramBotsApi api = new TelegramBotsApi();
         try {
             api.registerBot(bot);

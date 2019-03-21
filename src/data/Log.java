@@ -9,7 +9,7 @@ public class Log {
     private static int level;
 
     public static void Info(String str) {
-        if (DEBUG <= Log.level)
+        if (DEBUG >= Log.level)
             System.out.println(str);
     }
 

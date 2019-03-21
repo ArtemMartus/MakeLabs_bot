@@ -1,6 +1,11 @@
 package main;
 
-import data.*;
+import controllers.PostWorkController;
+import data.Contract;
+import data.ContractUser;
+import data.Log;
+import data.PostWorkData;
+import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -17,81 +22,25 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static data.InlinePathData.remLast;
+import static controllers.PostWorkController.getLastName;
+import static controllers.PostWorkController.validifyPath;
 
-public class MyClass extends TelegramLongPollingBot {
+public class MakeLabs_bot extends TelegramLongPollingBot {
 
     private final DataClass dataClass;
-    private HashMap<String, InlinePathData> dataset;
+    private HashMap<String, PostWorkData> dataset;
 
-    public MyClass(DataClass dataClass) {
+    public MakeLabs_bot(DataClass dataClass) {
         this.dataClass = dataClass;
         dataset = new HashMap<>();
-        dataset.put("/", new InlinePathData("Домашняя страница" +
-                "\nЗдесь вы можете посмотреть статус, сделать новый заказ" +
-                "\nИ связаться с нами",
-                Arrays.asList(
-                        new InButton("orders", "Мои заказы"),
-                        new InButton("make", "Сделать заказ"),
-                        new InButton("support", "О нас")
-                )));
-        dataset.put("/make", new InlinePathData("Выберете предмет:",
-                Arrays.asList(
-                        new InButton("aip", "АиП"),
-                        new InButton("back", "<-")
-                )));
-        dataset.put("/make/aip", new InlinePathData("Алгоритмизация и Программирование\nВыберете работу:",
-                Arrays.asList(
-                        new InButton("sr1", "Ср1"),
-                        new InButton("sr2", "Ср2"),
-                        new InButton("back", "<-")
-                )));
 
-        dataset.put("/make/aip/sr1", new InlinePathData("Самостоятельная работа 1\nВыберете нужное:",
-                Arrays.asList(
-                        new InButton("code:65:true", "Код"),
-                        new InButton("sa+mpz:85:true", "Схема Алгоритма и Математическая Постановка Задачи"),
-                        new InButton("tests:35:true", "Тесты"),
-                        new InButton("comments:120:true", "Комментарии"),
-                        new InButton("apply", "Готово"),
-                        new InButton("back", "<-")
-                )));
-        dataset.put("/make/aip/sr2", new InlinePathData("Самостоятельная работа 2\nВыберете нужное:",
-                Arrays.asList(
-                        new InButton("code:65:true", "Код"),
-                        new InButton("sa+mpz:85:true", "Схема Алгоритма и Математическая Постановка Задачи"),
-                        new InButton("tests:35:true", "Тесты"),
-                        new InButton("comments:120:true", "Комментарии"),
-                        new InButton("apply", "Готово"),
-                        new InButton("back", "<-")
-                )));
+        PostWorkController.loadWork();
+
+        dataset.put("/", PostWorkController.getData("/"));
+        dataset.put("/Сделать заказ", PostWorkController.getData("/Сделать заказ"));
 
     }
 
-    public static String getLastName(String path) {
-        int lastSlash = path.lastIndexOf("/");
-        return path.substring(lastSlash + 1, path.length());
-    }
-
-    public static String[] decodeCommand(String command) {
-        return command.split(":");
-    }
-
-    public static String encodeIntoCommand(List<Object> data) {
-        StringBuilder sb = new StringBuilder();
-        for (Object o : data)
-            sb.append(o.toString()).append(":");
-        return sb.substring(0, sb.length() - 1);
-    }
-
-    private String validifyPath(String path) {
-        if (dataset.get(path) != null)
-            return path;
-        if (dataset.get(remLast(path)) != null)
-            return remLast(path);
-        Log.Info("validifyPath returns home url");
-        return "/";
-    }
 
     private ContractUser getUser(Update update) {
         Integer userId = getUserId(update);
@@ -113,7 +62,7 @@ public class MyClass extends TelegramLongPollingBot {
         ContractUser usr = dataClass.getUser(userId);
         if (usr == null) {
             List<Contract> list = new ArrayList<>();
-            usr = new ContractUser(username, firstname, list);
+            usr = new ContractUser(userId, username, firstname, list);
             dataClass.setUser(userId, usr);
         }
         return usr;
@@ -155,9 +104,38 @@ public class MyClass extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> layout = new ArrayList<>();
 
         List<InlineKeyboardButton> row = new ArrayList<>();
-        List<InButton> data = dataset.get(validifyPath(user.getState())).getButtons();
+        List<Pair<String, Integer>> data = dataset.get(user.getState()).getParams();
+
         Log.Info("Found " + data.size() + " buttons for " + user.getState(), Log.VERBOSE);
-        int chars = 55 / data.size();
+
+        int buttons = data.size();
+        //final int chars_in_a_row = 62; //desktop
+        final int chars_in_a_row = 48;  //mobile
+        final int columns = 3;
+        while (buttons > 0) {
+            for (int i = 0, cch = chars_in_a_row; i < columns && buttons > 0; ++i, buttons--) {
+                String buttonText = data.get(data.size() - buttons).getFirst();
+                cch -= buttonText.length();
+                Log.Info("Adding " + buttonText + " to layout", Log.VERBOSE);
+
+                row.add(
+                        new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
+                );
+                //TODO make contracts
+                //TODO make buttons even more beautiful
+                //TODO make back button last in layout
+                if ((cch <= 0 && row.size() >= 1)) {
+                    layout.add(row);
+                    row = new ArrayList<>();
+                    //buttonText = shortenName(buttonText);
+                }
+
+            }
+            layout.add(row);
+            row = new ArrayList<>();
+        }
+
+        /*
         for (InButton button : data) {
             Log.Info("Adding " + button.getText() + "(" + button.getCode() + ") to layout", Log.VERBOSE);
             String buttonText = button.getText();
@@ -166,9 +144,8 @@ public class MyClass extends TelegramLongPollingBot {
             row.add(
                     new InlineKeyboardButton(buttonText).setCallbackData(button.getCode())
             );
-        }
+        }*/
 
-        layout.add(row);
 
         return markup.setKeyboard(layout);
     }
@@ -218,31 +195,28 @@ public class MyClass extends TelegramLongPollingBot {
         }
     }
 
-    private String getCheckoutText(InlinePathData data) {
+    private String getCheckoutText(Contract contract, PostWorkData data) {
         int overall_price = 0;
-        StringBuilder editedText = new StringBuilder(data.getDescription());
+        contract.setName(data.getDescription());
+        StringBuilder editedText = new StringBuilder(contract.getName());
         editedText.append("\n");
-        boolean add_price = false;
-        for (InButton c : data.getButtons()) {
-            String[] c_ptrs = decodeCommand(c.getCode());
-            if (c_ptrs.length <= 2) {
-                Log.Info("Stepped onto " + c.getText() + " continuing getCheckoutText cycle");
-                continue;
-            }
-            add_price = true;
-            int c_price = Integer.parseInt(c_ptrs[1]);
-            boolean c_checked = Boolean.parseBoolean(c_ptrs[2]);
-            editedText.append(c.getText()).append(" ").append(c_price).append("₴");
-            if (c_checked) {
-                overall_price += c_price;
+        for (Pair<String, Integer> pair : data.getParams()) {
+            String name = pair.getFirst();
+            boolean checked = contract.isSet(name);
+            int price = pair.getSecond();
+            if (price < 0)
+                continue; // it is not actual payment related button. like 'back' button or so
+            editedText.append(name).append(" ").append(price).append("₴");
+            if (checked) {
+                overall_price += price;
                 editedText.append(" ✅ ");
             } else {
                 editedText.append(" ❌ ");
             }
             editedText.append("\n");
         }
-        if (add_price)
-            editedText.append("\nИтого:\t").append(overall_price).append("₴");
+        editedText.append("\nИтого:\t").append(overall_price).append("₴");
+        contract.setPrice(overall_price);
         return editedText.toString();
     }
 
@@ -301,23 +275,28 @@ public class MyClass extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         Log.Info("Got an update " + update.getUpdateId() + "\n", Log.MAIN);
 
+
         if (update.hasInlineQuery()) {
             answerInline(update);
             return;
         }
-        Integer uid = getUserId(update);
-        Long chatId = getChatId(update);
+
         ContractUser user = getUser(update);
+
         if (user == null) {
             Log.Info("user==null. Continuing...");
             return;
         }
+
+        Long chatId = getChatId(update);
+        Integer uid = user.getId();
 
         Integer messageId = getMessageId(uid, chatId);
         if (messageId == null) {
             Log.Info("messageId==null. Continuing...");
             return;
         }
+
 
         User fromUser = null;
         if (update.hasMessage()) {
@@ -327,11 +306,11 @@ public class MyClass extends TelegramLongPollingBot {
         }
         Log.Info("Someone sent message to this bot", Log.MAIN);
 
-
         if (fromUser != null)
             Log.Info(userDataString(fromUser), Log.EXTENDED);
         if (update.hasMessage() && update.getMessage().hasText())
-            Log.Info("He writes: " + update.getMessage().getText() + "\n", Log.EXTENDED);
+            Log.Info("He writes: " + update.getMessage().getText(), Log.EXTENDED);
+
 
         CallbackQuery query = update.getCallbackQuery();
         boolean alreadySendCallbackAnswer = false;
@@ -345,28 +324,39 @@ public class MyClass extends TelegramLongPollingBot {
             if (!user.getState().equals("/"))
                 text += "/";
             text += data;
-            Log.Info("Current user url = " + text);
+            Log.Info("Current user uri = " + text);
         }
 
         String validText = validifyPath(text);
 
         user.setState(validText);
-
+        if (dataset.get(validText) == null) {
+            dataset.put(validText, PostWorkController.getData(validText));
+        }
 
         String command = getLastName(text);
 
-        InlinePathData data = dataset.get(validText);
+        PostWorkData data = dataset.get(validText);
 
         if (!validText.equals(text)) {
             switch (command) {
-                case "support": {
+                case "Сотрудничество": {
+                    Send("Присоединяйтесь к комманде Make Labs\n" +
+                            "Если Вы срочно хотите заработать денег\n" +
+                            "и способны выполнять лабораторные работы\n" +
+                            "пишите этому боту @MakeLabsJob_bot\n" +
+                            "", chatId);
+                    break;
+                }
+                case "О нас": {
                     Send("Make Labs это бот-помошник созданный с целью\n" +
                             "избавить студентов от рутинных заданий\n" +
                             "чтобы Вы могли заниматься любимыми делами\n" +
                             "не переживая о незданных самостоятельных работах\n" +
-                            "", chatId);
+                            "Telegram: @upsage", chatId);
+                    break;
                 }
-                case "orders": {
+                case "Мои заказы": {
                     if (user.getContracts().size() > 0) {
                         for (Contract contract : user.getContracts()) {
                             Send(contract.toString(), chatId);
@@ -378,35 +368,17 @@ public class MyClass extends TelegramLongPollingBot {
                         } else
                             Send("У Вас отсутствуют активные заказы", chatId);
                     }
+                    break;
                 }
-                break;
-                case "back": {
+                case "Назад": {
                     user.goBack();
                     data = dataset.get(user.getState());
+                    break;
                 }
-                break;
                 default: {
-                    String[] ptrs = decodeCommand(command);
-                    if (ptrs.length == 3) {
-                        InButton button = data.handleButton(ptrs[0]);
-                        if (button == null) {
-                            Log.Info("Couldn't find button " + ptrs[0] + " under " + validText);
-                            text = command = "/";
-                            user.setState(text);
-                            data = dataset.get(user.getState());
-                        } else {
-                            try {
-
-                                Integer price = Integer.parseInt(ptrs[1]);
-                                boolean checked = Boolean.parseBoolean(ptrs[2]);
-                                checked = !checked;
-                                button.setCode(encodeIntoCommand(Arrays.asList(ptrs[0], price, checked)));
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    }
+                    Log.Info("Got unhandled command: " + command);
                 }
+
             }
         }
 
@@ -414,7 +386,7 @@ public class MyClass extends TelegramLongPollingBot {
 
 
         InlineKeyboardMarkup keyboardMarkup = getMarkup(user);
-        String editedText = getCheckoutText(data);
+        String editedText = data.getDescription();//getCheckoutText(data);
 
         EditMessageText e = new EditMessageText();
         e
