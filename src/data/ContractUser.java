@@ -25,10 +25,6 @@ public class ContractUser implements Serializable {
     private String state;
     private int messageId;
 
-    public ContractUser(Integer id) {
-        setId(id);
-    }
-
     public ContractUser(Integer id, String username, String firstname) {
         if (!setId(id)) {
             this.username = username;
@@ -37,14 +33,6 @@ public class ContractUser implements Serializable {
         }
     }
 
-    public ContractUser(Integer id, String username, String firstname, List<Contract> contracts, String state) {
-        if (!setId(id)) {
-            this.username = username;
-            this.firstname = firstname;
-            this.contracts = contracts;
-            this.state = state;
-        }
-    }
 
     public Integer getId() {
         return id;
@@ -132,9 +120,15 @@ public class ContractUser implements Serializable {
                     Integer price = (Integer) objMap.get("price");
                     Integer id = (Integer) objMap.get("id");
                     Boolean applied = (Boolean) objMap.get("applied");
+                    String status = (String) objMap.get("status");
 
-                    contracts.add(new Contract(name, additional, comment, price, applied, id));
-                    Log.Info("Loaded contract " + name + " " + price + "₴ for user " + username + "[" + id + "]|" + firstname);
+                    Contract contract = new Contract(name, additional, comment, price, applied, id, status);
+                    if (!contracts.contains(contract)) {
+                        contracts.add(contract);
+                        Log.Info("Loaded contract " + name + " " + price + "₴ for user " + username + "[" + this.id + "]|" + firstname);
+                    } else {
+                        Log.Info("Contracts list already has contract №" + contract.getId());
+                    }
 
                 }
             }
@@ -144,6 +138,30 @@ public class ContractUser implements Serializable {
         }
 
         Log.Info(fileName + " is valid ContractUser JSON");
+
+        File file = new File(fileName + "_dir");
+        if (file.exists()) {
+            File[] contents = file.listFiles();
+            if (contents != null && contents.length > 0) {
+                Log.Info("Found " + contents.length + " applied contracts in " + file.getPath());
+                for (File testContract : contents) {
+                    if (testContract.isFile()) {
+                        Contract contract = new Contract();
+                        if (contract.loadFrom(testContract.getPath())) {
+                            if (!contracts.contains(contract)) {
+                                contracts.add(contract);
+                                Log.Info(testContract.getPath() + " successfully loaded contract");
+                            } else
+                                Log.Info("Contracts list already has contract №" + contract.getId());
+                        } else {
+                            Log.Info(testContract.getPath() + " failed loading contract");
+                        }
+                    } else {
+                        Log.Info(testContract.getPath() + " is not a file");
+                    }
+                }
+            }
+        }
         return true;
     }
 

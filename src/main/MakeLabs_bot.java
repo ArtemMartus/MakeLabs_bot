@@ -150,9 +150,6 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                             new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
                     );
                 }
-                //TODO make contracts
-                //TODO make buttons even more beautiful
-                //TODO make back button last in layout
 
 
                 if (cch <= 0 && row.size() >= 1 ||
@@ -197,7 +194,8 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             if (ret.getText().equals(e.getText()))
                 return messageId;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.Info("Exception in testMessageId:" + ex.getMessage());
+            //ex.printStackTrace();
             dataClass.setMessageId(uid, 0);
             return 0;
         }
@@ -210,8 +208,9 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             SendMessage s = new SendMessage(chatId, ".");
             try {
                 mid = execute(s).getMessageId();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ex) {
+                Log.Info("Exception in getMessageId:" + ex.getMessage());
+                //e.printStackTrace();
                 return 0;
             }
             dataClass.setMessageId(uid, mid);
@@ -224,7 +223,8 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         try {
             execute(sendMessage);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.Info("Exception in Send:" + ex.getMessage());
+            //ex.printStackTrace();
         }
     }
 
@@ -236,7 +236,8 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         try {
             execute(answerCallbackQuery);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.Info("Exception in sendCallbackAnswer:" + ex.getMessage());
+            //ex.printStackTrace();
         }
     }
 
@@ -254,9 +255,9 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             editedText.append(name).append(" ").append(price).append("₴");
             if (checked) {
                 overall_price += price;
-                editedText.append(" ✅ ");
+                editedText.append("\t\t✅ ");
             } else {
-                editedText.append(" ❌ ");
+                editedText.append("\t\t❌ ");
             }
             editedText.append("\n");
         }
@@ -379,6 +380,8 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         if (fromUser != null)
             Log.Info(userDataString(fromUser), Log.EXTENDED);
 
+        boolean handledCommand = false;
+
         if (update.hasMessage() && update.getMessage().hasText()) {
             String gotMessage = update.getMessage().getText();
             Log.Info("He writes: " + gotMessage, Log.EXTENDED);
@@ -387,6 +390,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                 messageId = getMessageId(uid, chatId);
                 user.setMessageId(messageId);
                 user.setState("/");
+                handledCommand = true;
             }
         }
 
@@ -420,7 +424,6 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             dataset.put(validText, data);
         }
 
-        boolean shouldEditMessage = true;
 
         if (!validText.equals(text)) {
             switch (command) {
@@ -430,7 +433,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                             "и способны выполнять лабораторные работы\n" +
                             "пишите этому боту @MakeLabsJob_bot\n" +
                             "", chatId);
-                    shouldEditMessage = false;
+                    handledCommand = true;
                     break;
                 }
                 case "О нас": {
@@ -439,14 +442,33 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                             "чтобы Вы могли заниматься любимыми делами\n" +
                             "не переживая о незданных самостоятельных работах\n" +
                             "Telegram: @upsage", chatId);
-                    shouldEditMessage = false;
+                    handledCommand = true;
                     break;
-                }
+                }// TODO make /help command works
+                //TODO make contract store date of applying, boolean isPurchased, date of purchase, date start processing, date start reviewing, date give off to client
+                //TODO make more complex status handling with actual status plus actual status date
+                //TODO make ability to choose whether the work should be made just to pass 60% with 0.75 price in 5 days or \n
+                // made normally for regular price in 5 days or made finest quality in 5 days for double price\n
+                // or made in 1 day with fines quality with 4 times price
+                //Possibly last one to-do should use new uri like /users_database/123_dir/123abc_dir/checkout  and be a copy of sampled layout with changed prices
+
+                //TODO start planning Jobs bot
+                //we can handle new jobs by asking employees for pdf task details and writing our own prices. It would be the safest way
+                //TODO make sales counting for each postWorkData
                 case "Мои заказы": {
                     if (user.getContracts().size() > 0) {
                         for (Contract contract : user.getContracts()) {
                             Send(contract.toString(), chatId);
                         }
+
+                        dataClass.setMessageId(uid, 0);
+                        messageId = getMessageId(uid, chatId);
+                        user.setMessageId(messageId);
+                        validText = text = "/";
+                        command = "";
+                        user.setState(text);
+                        data = dataset.get(text);
+
                     } else {
                         if (query != null) {
                             alreadySendCallbackAnswer = true;
@@ -454,31 +476,45 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                         } else
                             Send("У Вас отсутствуют активные заказы", chatId);
                     }
-                    shouldEditMessage = false;
+                    handledCommand = true;
                     break;
                 }
                 case "Назад": {
                     user.goBack();
+                    validText = user.getState();
+                    text = validText;
+                    command = "";
                     data = dataset.get(user.getState());
-                    shouldEditMessage = true;
+                    handledCommand = true;
+                    break;
+                }
+                case "Подтвердить": {
+                    Contract contract = user.getUnAppliedContract();
+                    contract.apply();
+                    contract.writeTo(user.getId() + "_dir/" + contract.getHash());
+                    validText = text = "/";
+                    command = "";
+                    user.setState(text);
+                    data = dataset.get(text);
+                    handledCommand = true;
                     break;
                 }
                 default: {
-
-                    // TODO make it works correctly
-                    // currently toggling command works incorrectly
 
                     Log.Info("Got unhandled command: " + command);
                     //This is most possibly checkout form
 
                     Contract contract = user.getUnAppliedContract();
+
+
                     contract.setUpAllIncluding(data);
 
                     contract.toogle(command);
 
                     editedText = getCheckoutText(contract, data);
 
-                    shouldEditMessage = true;
+                    handledCommand = true;
+
                 }
 
             }
@@ -496,14 +532,27 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                 Log.Info("It is still null... Do PostWorkController has it??");
             }
         }
-        //if (shouldEditMessage)
-        {
-            if (editedText == null && !PostWorkController.pathExists(text) && data.hasChild(command)) {// If we just loaded last branch show the recipe for unapply contract
+
+
+        if (!handledCommand && editedText == null) {
+            boolean is_not_endpoint = true;
+            for (Pair<String, Integer> pair : data.getParams()) {
+                String str = validText;
+                if (!str.equals("/"))
+                    str += "/";
+                str += pair.getFirst();
+                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str)) {
+                    is_not_endpoint = false;
+                    break;
+                }
+            }
+            if (!is_not_endpoint) {// If we just loaded last branch show the recipe for unapply contract
                 Contract contract = user.getUnAppliedContract();
                 contract.setUpAllIncluding(data);
                 editedText = getCheckoutText(contract, data);
             }
         }
+
 
         Log.Info("\tText = " + text + "\n\tCommand = " + command + "\n\tValid Text = " + validText);
 
