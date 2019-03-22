@@ -9,7 +9,10 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import static controllers.PostWorkController.remLast;
 
@@ -18,40 +21,50 @@ public class ContractUser implements Serializable {
     private Integer id;
     private String username;
     private String firstname;
-    private List<Contract> contracts = new ArrayList<>();
+    private List<Contract> contracts = new LinkedList<>();
     private String state;
+    private int messageId;
 
     public ContractUser(Integer id) {
-        this.id = id;
-        tryLoad();
+        setId(id);
     }
 
-    public ContractUser(Integer id, String username, String firstname, List<Contract> contracts) {
-        this.id = id;
-        this.username = username;
-        this.firstname = firstname;
-        this.contracts = contracts;
-        state = "/";
+    public ContractUser(Integer id, String username, String firstname) {
+        if (!setId(id)) {
+            this.username = username;
+            this.firstname = firstname;
+            state = "/";
+        }
     }
 
     public ContractUser(Integer id, String username, String firstname, List<Contract> contracts, String state) {
-        this.id = id;
-        this.username = username;
-        this.firstname = firstname;
-        this.contracts = contracts;
-        this.state = state;
+        if (!setId(id)) {
+            this.username = username;
+            this.firstname = firstname;
+            this.contracts = contracts;
+            this.state = state;
+        }
     }
 
     public Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public boolean setId(Integer id) {
         this.id = id;
+        return tryLoad();
     }
 
     public String getUsername() {
         return username;
+    }
+
+    public int getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(int messageId) {
+        this.messageId = messageId;
     }
 
     public void setUsername(String username) {
@@ -90,56 +103,74 @@ public class ContractUser implements Serializable {
         state = remLast(state);
     }
 
-    private void tryLoad() {
+    private boolean tryLoad() {
         String fileName = base_uri + id;
         if (!Files.exists(Paths.get(fileName))) // nothing to load
-            return;
+            return false;
 
         try {
             String fileData = new String(Files.readAllBytes(Paths.get(fileName))); // Read from file
             JSONObject object = new JSONObject(fileData);
+
+            id = object.getInt("id");
             username = object.getString("username");
             firstname = object.getString("firstname");
             state = object.getString("state");
+            messageId = object.getInt("messageId");
 
-            if (object.has("objects")) {
-                JSONArray jsonArray = object.getJSONArray("objects");
+            if (object.has("contracts")) {
+                JSONArray jsonArray = object.getJSONArray("contracts");
                 for (int i = 0; i < jsonArray.length(); ++i) {
 
                     Map<String, Object> objMap = jsonArray.getJSONObject(i).toMap();
-                    Set<String> keys = objMap.keySet();
 
-                    System.out.println(jsonArray.getJSONObject(i).toString());
+                    Log.Info(jsonArray.getJSONObject(i).toString(), Log.VERBOSE);
 
-                    for (String key : keys) {
-                        String name = (String) objMap.get("name");
-                        String additional = (String) objMap.get("additional");
-                        String comment = (String) objMap.get("comment");
-                        Integer price = (Integer) objMap.get("price");
-                        Boolean applied = (Boolean) objMap.get("applied");
+                    String additional = (String) objMap.get("additional");
+                    String name = (String) objMap.get("name");
+                    String comment = (String) objMap.get("comment");
+                    Integer price = (Integer) objMap.get("price");
+                    Integer id = (Integer) objMap.get("id");
+                    Boolean applied = (Boolean) objMap.get("applied");
 
-                        contracts.add(new Contract(name, additional, comment, price, applied));
-                        Log.Info("Loaded contract " + name + " " + price + "₴ for user " + username + "[" + id + "]|" + firstname);
-                    }
+                    contracts.add(new Contract(name, additional, comment, price, applied, id));
+                    Log.Info("Loaded contract " + name + " " + price + "₴ for user " + username + "[" + id + "]|" + firstname);
+
                 }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return;
+            return false;
         }
 
         Log.Info(fileName + " is valid ContractUser JSON");
+        return true;
+    }
+
+    public Contract getUnAppliedContract() {
+        if (hasContracts()) {
+            for (Contract contract : contracts)
+                if (!contract.getApplied())
+                    return contract;
+        }
+        Contract contract = new Contract();
+        contracts.add(contract);
+        return contract;
     }
 
     public void save() {
-        HashMap<String, String> testSr = new HashMap<>();
+        HashMap<String, Object> dataset = new HashMap<>();
+        dataset.put("id", id);
+        dataset.put("username", username);
+        dataset.put("firstname", firstname);
+        dataset.put("contracts", contracts);
+        if (hasContracts()) {
+            Log.Info("Saving contracts into json");
+        }
+        dataset.put("state", state);
+        dataset.put("messageId", messageId);
 
-        testSr.put("username", username);
-        testSr.put("firstname", firstname);
-        testSr.put("state", state);
-
-        JSONObject object = new JSONObject(testSr);
-        object.put("objects", contracts);
+        JSONObject object = new JSONObject(dataset);
 
         String fileName = base_uri + id;
 

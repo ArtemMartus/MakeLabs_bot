@@ -12,8 +12,10 @@ import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -61,8 +63,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         }
         ContractUser usr = dataClass.getUser(userId);
         if (usr == null) {
-            List<Contract> list = new ArrayList<>();
-            usr = new ContractUser(userId, username, firstname, list);
+            usr = new ContractUser(userId, username, firstname);
             dataClass.setUser(userId, usr);
         }
         return usr;
@@ -103,8 +104,13 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> layout = new ArrayList<>();
 
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        List<Pair<String, Integer>> data = dataset.get(user.getState()).getParams();
+        List<InlineKeyboardButton> row = new LinkedList<>();
+        PostWorkData workData = dataset.get(user.getState());
+        if (workData == null) {
+            workData = PostWorkController.getData(user.getState());
+            dataset.put(user.getState(), workData);
+        }
+        List<Pair<String, Integer>> data = workData.getParams();
 
         Log.Info("Found " + data.size() + " buttons for " + user.getState(), Log.VERBOSE);
 
@@ -112,27 +118,56 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         //final int chars_in_a_row = 62; //desktop
         final int chars_in_a_row = 48;  //mobile
         final int columns = 3;
+
+        Log.Info("Buttons data before sort ");
+        for (Pair<String, Integer> pair : data)
+            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
+
+        data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
+
+        Log.Info("Buttons data after sort ");
+        for (Pair<String, Integer> pair : data)
+            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
+
+        List<InlineKeyboardButton> appendToTheEndButtons = new LinkedList<>();
+
         while (buttons > 0) {
             for (int i = 0, cch = chars_in_a_row; i < columns && buttons > 0; ++i, buttons--) {
-                String buttonText = data.get(data.size() - buttons).getFirst();
+
+                int current_id = data.size() - buttons;
+                String buttonText = data.get(current_id).getFirst();
+                int price = data.get(current_id).getSecond();
+
                 cch -= buttonText.length();
                 Log.Info("Adding " + buttonText + " to layout", Log.VERBOSE);
 
-                row.add(
-                        new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
-                );
+                if (price == -99) {
+                    appendToTheEndButtons.add(
+                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
+                    );
+                } else {
+                    row.add(
+                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
+                    );
+                }
                 //TODO make contracts
                 //TODO make buttons even more beautiful
                 //TODO make back button last in layout
-                if ((cch <= 0 && row.size() >= 1)) {
+
+
+                if (cch <= 0 && row.size() >= 1 ||
+                        (current_id + 1 < data.size() &&
+                                cch < data.get(current_id + 1).getFirst().length())) {
                     layout.add(row);
-                    row = new ArrayList<>();
+                    row = new LinkedList<>();
                     //buttonText = shortenName(buttonText);
                 }
 
             }
-            layout.add(row);
-            row = new ArrayList<>();
+            if (row.size() > 0) {
+                layout.add(row);
+                row = new LinkedList<>();
+            }
         }
 
         /*
@@ -146,32 +181,42 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             );
         }*/
 
+        layout.add(appendToTheEndButtons);
 
         return markup.setKeyboard(layout);
     }
 
-    private Integer getMessageId(Integer uid, Long chatId) {
-        Integer mid = dataClass.getMessageId(uid);
-        if (mid == null) {
+    private int testMessageId(Integer uid, Long chatId, int messageId) {
+        EditMessageText e = new EditMessageText();
+        e
+                .setChatId(chatId)
+                .setMessageId(messageId)
+                .setText("...");
+        try {
+            Message ret = (Message) execute(e);
+            if (ret.getText().equals(e.getText()))
+                return messageId;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            dataClass.setMessageId(uid, 0);
+            return 0;
+        }
+        return messageId;
+    }
+
+    private int getMessageId(Integer uid, Long chatId) {
+        int mid = dataClass.getMessageId(uid);
+        if (mid == 0) {
             SendMessage s = new SendMessage(chatId, ".");
             try {
                 mid = execute(s).getMessageId();
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                return 0;
             }
             dataClass.setMessageId(uid, mid);
         }
-        EditMessageText e = new EditMessageText();
-        e.setChatId(chatId).setMessageId(mid).setText("...");
-        try {
-            execute(e);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            dataClass.setMessageId(uid, null);
-            return null;
-        }
-        return mid;
+        return testMessageId(uid, chatId, mid);
     }
 
     private void Send(String text, Long chatId) {
@@ -215,7 +260,8 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             }
             editedText.append("\n");
         }
-        editedText.append("\nИтого:\t").append(overall_price).append("₴");
+        if (overall_price > 0)
+            editedText.append("\nИтого:\t").append(overall_price).append("₴");
         contract.setPrice(overall_price);
         return editedText.toString();
     }
@@ -248,6 +294,13 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
     }
 
     void answerInline(Update update) {
+
+        String id = update.getInlineQuery().getId();
+        if (id == null || id.isEmpty()) {
+            Log.Info("Got a strange inline query without an id");
+            return;
+        } else
+            Log.Info("Inline query " + id);
         Log.Info("Someone is mentioning this bot inline " + getDate(), Log.MAIN);
 
         User fromUser = update.getInlineQuery().getFrom();
@@ -256,12 +309,22 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
 
         AnswerInlineQuery aiq = new AnswerInlineQuery();
         InlineQueryResultArticle result = new InlineQueryResultArticle();
+        InputTextMessageContent content = new InputTextMessageContent();
+
+        content
+                .setMessageText("Фриланс площадка для лабораторных работ.\n" +
+                        "Если Вам нужна лабораторная, хотите лучше разобраться\n" +
+                        "в учебных материалах и заработать на этом - значит Вам сюда.\n" +
+                        "@MakeLabs_bot");
+
         result
+                .setId(id)
                 .setDescription("Мы сделаем Ваши рутинные задания!")
+                .setInputMessageContent(content)
                 .setTitle("Лабораторные? Самостоятельные? Вам сюда!");
         aiq
                 .setPersonal(true)
-                .setInlineQueryId(update.getInlineQuery().getId())
+                .setInlineQueryId(id)
                 .setResults(result);
 
         try {
@@ -288,12 +351,19 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             return;
         }
 
+
         Long chatId = getChatId(update);
         Integer uid = user.getId();
 
-        Integer messageId = getMessageId(uid, chatId);
-        if (messageId == null) {
-            Log.Info("messageId==null. Continuing...");
+        int messageId = testMessageId(user.getId(), chatId, user.getMessageId());
+
+        if (messageId == 0) {
+            messageId = getMessageId(uid, chatId);
+            user.setMessageId(messageId);
+        }
+
+        if (messageId == 0) {
+            Log.Info("messageId==0. Continuing...");
             return;
         }
 
@@ -308,8 +378,17 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
 
         if (fromUser != null)
             Log.Info(userDataString(fromUser), Log.EXTENDED);
-        if (update.hasMessage() && update.getMessage().hasText())
-            Log.Info("He writes: " + update.getMessage().getText(), Log.EXTENDED);
+
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            String gotMessage = update.getMessage().getText();
+            Log.Info("He writes: " + gotMessage, Log.EXTENDED);
+            if (gotMessage.equals("/start")) {
+                dataClass.setMessageId(uid, 0);
+                messageId = getMessageId(uid, chatId);
+                user.setMessageId(messageId);
+                user.setState("/");
+            }
+        }
 
 
         CallbackQuery query = update.getCallbackQuery();
@@ -330,13 +409,18 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         String validText = validifyPath(text);
 
         user.setState(validText);
-        if (dataset.get(validText) == null) {
-            dataset.put(validText, PostWorkController.getData(validText));
-        }
 
         String command = getLastName(text);
 
+        String editedText = null;
+
         PostWorkData data = dataset.get(validText);
+        if (data == null) {
+            data = PostWorkController.getData(validText);
+            dataset.put(validText, data);
+        }
+
+        boolean shouldEditMessage = true;
 
         if (!validText.equals(text)) {
             switch (command) {
@@ -346,6 +430,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                             "и способны выполнять лабораторные работы\n" +
                             "пишите этому боту @MakeLabsJob_bot\n" +
                             "", chatId);
+                    shouldEditMessage = false;
                     break;
                 }
                 case "О нас": {
@@ -354,6 +439,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                             "чтобы Вы могли заниматься любимыми делами\n" +
                             "не переживая о незданных самостоятельных работах\n" +
                             "Telegram: @upsage", chatId);
+                    shouldEditMessage = false;
                     break;
                 }
                 case "Мои заказы": {
@@ -368,25 +454,65 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
                         } else
                             Send("У Вас отсутствуют активные заказы", chatId);
                     }
+                    shouldEditMessage = false;
                     break;
                 }
                 case "Назад": {
                     user.goBack();
                     data = dataset.get(user.getState());
+                    shouldEditMessage = true;
                     break;
                 }
                 default: {
+
+                    // TODO make it works correctly
+                    // currently toggling command works incorrectly
+
                     Log.Info("Got unhandled command: " + command);
+                    //This is most possibly checkout form
+
+                    Contract contract = user.getUnAppliedContract();
+                    contract.setUpAllIncluding(data);
+
+                    contract.toogle(command);
+
+                    editedText = getCheckoutText(contract, data);
+
+                    shouldEditMessage = true;
                 }
 
             }
         }
 
-        Log.Info("Looking at {" + text + "} where command=" + command + " and validText=" + validText);
+        if (data == null) {
+            Log.Info("Some strange shit makes data set to null...");
+            data = dataset.get(validText);
+            if (data == null) {
+                Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
+                data = PostWorkController.getData(validText);
+                dataset.put(validText, data);
+            }
+            if (data == null) {
+                Log.Info("It is still null... Do PostWorkController has it??");
+            }
+        }
+        //if (shouldEditMessage)
+        {
+            if (editedText == null && !PostWorkController.pathExists(text) && data.hasChild(command)) {// If we just loaded last branch show the recipe for unapply contract
+                Contract contract = user.getUnAppliedContract();
+                contract.setUpAllIncluding(data);
+                editedText = getCheckoutText(contract, data);
+            }
+        }
+
+        Log.Info("\tText = " + text + "\n\tCommand = " + command + "\n\tValid Text = " + validText);
 
 
         InlineKeyboardMarkup keyboardMarkup = getMarkup(user);
-        String editedText = data.getDescription();//getCheckoutText(data);
+
+
+        if (editedText == null)
+            editedText = data.getDescription();//getCheckoutText(data);
 
         EditMessageText e = new EditMessageText();
         e
@@ -400,9 +526,12 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             ex.printStackTrace();
         }
 
+
         if (!alreadySendCallbackAnswer && query != null) {
             sendCallbackAnswer(query, "");
         }
+
+        user.save();
     }
 
     @Override

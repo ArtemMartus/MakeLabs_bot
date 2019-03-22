@@ -1,35 +1,66 @@
 package data;
 
+import org.glassfish.grizzly.utils.Pair;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Contract implements Serializable {
-    private String name;
-    private String additional;
-    private String comment;
-    private Integer price;
-    private Boolean applied;
+    static Random random = new Random();
+    private String name = "";
+    private String additional = "";
+    private String comment = "";
+    private Integer price = 0;
+    private Boolean applied = false;
+    private int id;
 
     public Contract() {
+        id = generateRandomId();
     }
 
-    public Contract(String name, String additional, String comment, Integer price, Boolean applied) {
+    public Contract(String name, String additional, String comment, Integer price, Boolean applied, int id) {
+        //super();
         this.name = name;
         this.additional = additional;
         this.comment = comment;
         this.price = price;
         this.applied = applied;
+        this.id = id;
     }
 
     public Contract(String name, String additional, String comment, Integer price) {
+        super();
         this.name = name;
         this.additional = additional;
         this.comment = comment;
         this.price = price;
         applied = false;
+    }
+
+    public static int generateRandomId() {
+        int i = random.nextInt();
+        i = i < 0 ? -i : i;
+        return i;
+    }
+
+    public boolean isFreshNew() {
+        return name.isEmpty() && additional.isEmpty() && price == 0 && !applied && comment.isEmpty();
+    }
+
+    public void setUpAllIncluding(PostWorkData data) {
+        id = generateRandomId();
+        this.name = data.getDescription();
+        for (Pair<String, Integer> pair : data.getParams()) {
+            int price = pair.getSecond();
+            if (price < 0)
+                continue;
+            toogle(pair.getFirst());
+            this.price += price;
+        }
     }
 
     public String getName() {
@@ -54,6 +85,10 @@ public class Contract implements Serializable {
 
     public Boolean getApplied() {
         return applied;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void setName(String name) {
@@ -94,5 +129,27 @@ public class Contract implements Serializable {
             str.add(matcher.group(1));
         }
         return str;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        if (id == 0)
+            id = generateRandomId();
+        builder
+                .append("Заказ ")
+                .append(id)
+                .append("\t")
+                .append(name)
+                .append("\nВключено:")
+                .append("\n");
+        for (String str : getStuffSet()) {
+            builder.append("\t").append(str).append("\n");
+        }
+        builder
+                .append("Итоговая цена = ")
+                .append(price)
+                .append("\n");
+        return builder.toString();
     }
 }

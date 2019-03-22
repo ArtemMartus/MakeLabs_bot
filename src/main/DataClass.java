@@ -27,7 +27,7 @@ public class DataClass {
         return messageMap.get(uid);
     }
 
-    public void setMessageId(Integer uid, Integer messageId) {
+    public void setMessageId(int uid, int messageId) {
         messageMap.put(uid, messageId);
     }
 

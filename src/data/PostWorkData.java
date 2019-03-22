@@ -116,4 +116,13 @@ public class PostWorkData implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+
+    public boolean hasChild(String command) {
+        if (!hasParams())
+            return false;
+        for (Pair<String, Integer> pair : params)
+            if (pair.getFirst().equals(command))
+                return true;
+        return false;
+    }
 }
