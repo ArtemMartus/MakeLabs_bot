@@ -1,10 +1,13 @@
-package main;
+package maincode.controllers;
 
-import controllers.PostWorkController;
-import data.Contract;
-import data.ContractUser;
-import data.Log;
-import data.PostWorkData;
+import maincode.data.Contract;
+import maincode.data.ContractUser;
+import maincode.data.DataClass;
+import maincode.data.PostWorkData;
+import maincode.helper.Log;
+import maincode.model.Model;
+import maincode.view.View;
+import maincode.viewmodel.ViewModel;
 import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -24,15 +27,20 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static controllers.PostWorkController.getLastName;
-import static controllers.PostWorkController.validifyPath;
-
 public class MakeLabs_bot extends TelegramLongPollingBot {
 
+    private final Model model;
+    private final View view;
+    private final ViewModel viewModel;
     private final DataClass dataClass;
     private HashMap<String, PostWorkData> dataset;
 
     public MakeLabs_bot(DataClass dataClass) {
+        model = new Model();
+        viewModel = new ViewModel(model, this);
+        view = new View();
+        viewModel.addObserver(view);
+
         this.dataClass = dataClass;
         dataset = new HashMap<>();
 
@@ -119,13 +127,13 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         final int chars_in_a_row = 48;  //mobile
         final int columns = 3;
 
-        Log.Info("Buttons data before sort ");
+        Log.Info("Buttons maincode.maincode.data before sort ");
         for (Pair<String, Integer> pair : data)
             Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
 
         data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
 
-        Log.Info("Buttons data after sort ");
+        Log.Info("Buttons maincode.maincode.data after sort ");
         for (Pair<String, Integer> pair : data)
             Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
 
@@ -168,7 +176,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         }
 
         /*
-        for (InButton button : data) {
+        for (InButton button : maincode.maincode.data) {
             Log.Info("Adding " + button.getText() + "(" + button.getCode() + ") to layout", Log.VERBOSE);
             String buttonText = button.getText();
             if (buttonText.length() > chars)
@@ -280,13 +288,6 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         return str;
     }
 
-    private String getDate(Long unixtimestamp) {
-        String pattern = "MM/dd/yyyy HH:mm:ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Date today = new Date(unixtimestamp * 1000);
-        return df.format(today);
-    }
-
     private String getDate() {
         String pattern = "MM/dd/yyyy HH:mm:ss";
         DateFormat df = new SimpleDateFormat(pattern);
@@ -337,10 +338,13 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+
         Log.Info("Got an update " + update.getUpdateId() + "\n", Log.MAIN);
 
+        viewModel.setUpdate(update);
 
-        if (update.hasInlineQuery()) {
+
+        /*if (update.hasInlineQuery()) {
             answerInline(update);
             return;
         }
@@ -521,7 +525,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         }
 
         if (data == null) {
-            Log.Info("Some strange shit makes data set to null...");
+            Log.Info("Some strange shit makes maincode.maincode.data set to null...");
             data = dataset.get(validText);
             if (data == null) {
                 Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
@@ -561,7 +565,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
 
 
         if (editedText == null)
-            editedText = data.getDescription();//getCheckoutText(data);
+            editedText = data.getDescription();//getCheckoutText(maincode.maincode.data);
 
         EditMessageText e = new EditMessageText();
         e
@@ -580,7 +584,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             sendCallbackAnswer(query, "");
         }
 
-        user.save();
+        user.save();*/
     }
 
     @Override

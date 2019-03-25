@@ -1,6 +1,4 @@
-package main;
-
-import data.ContractUser;
+package maincode.data;
 
 import java.util.HashMap;
 import java.util.Map;

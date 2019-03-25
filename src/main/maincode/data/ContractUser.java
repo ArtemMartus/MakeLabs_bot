@@ -1,5 +1,6 @@
-package data;
+package maincode.data;
 
+import maincode.helper.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,7 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static controllers.PostWorkController.remLast;
+import static maincode.controllers.PostWorkController.remLast;
 
 public class ContractUser implements Serializable {
     private static final String base_uri = "./users_database/";
@@ -23,7 +24,7 @@ public class ContractUser implements Serializable {
     private String firstname;
     private List<Contract> contracts = new LinkedList<>();
     private String state;
-    private int messageId;
+    private Integer messageId;
 
     public ContractUser(Integer id, String username, String firstname) {
         if (!setId(id)) {
@@ -47,11 +48,11 @@ public class ContractUser implements Serializable {
         return username;
     }
 
-    public int getMessageId() {
+    public Integer getMessageId() {
         return messageId;
     }
 
-    public void setMessageId(int messageId) {
+    public void setMessageId(Integer messageId) {
         this.messageId = messageId;
     }
 
@@ -150,14 +151,14 @@ public class ContractUser implements Serializable {
                         if (contract.loadFrom(testContract.getPath())) {
                             if (!contracts.contains(contract)) {
                                 contracts.add(contract);
-                                Log.Info(testContract.getPath() + " successfully loaded contract");
+                                Log.Info(testContract.getPath() + " successfully loaded contract", Log.VERBOSE);
                             } else
-                                Log.Info("Contracts list already has contract №" + contract.getId());
+                                Log.Info("Contracts list already has contract №" + contract.getId(), Log.VERBOSE);
                         } else {
-                            Log.Info(testContract.getPath() + " failed loading contract");
+                            Log.Info(testContract.getPath() + " failed loading contract", Log.VERBOSE);
                         }
                     } else {
-                        Log.Info(testContract.getPath() + " is not a file");
+                        Log.Info(testContract.getPath() + " is not a file", Log.VERBOSE);
                     }
                 }
             }
@@ -183,7 +184,7 @@ public class ContractUser implements Serializable {
         dataset.put("firstname", firstname);
         dataset.put("contracts", contracts);
         if (hasContracts()) {
-            Log.Info("Saving contracts into json");
+            Log.Info("Saving contracts into json", Log.VERBOSE);
         }
         dataset.put("state", state);
         dataset.put("messageId", messageId);
@@ -192,7 +193,7 @@ public class ContractUser implements Serializable {
 
         String fileName = base_uri + id;
 
-        Log.Info("Generating form " + fileName + " " + object.toString(), Log.VERBOSE);
+        Log.Info("Generating form " + fileName + " " + object.toString(), Log.EVERYTHING);
 
         Path path = Paths.get(fileName);
         File file = new File(path.getParent().toUri());

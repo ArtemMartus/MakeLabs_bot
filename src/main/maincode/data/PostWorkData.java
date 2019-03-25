@@ -1,6 +1,7 @@
-package data;
+package maincode.data;
 
-import controllers.PostWorkController;
+import maincode.controllers.PostWorkController;
+import maincode.helper.Log;
 import org.glassfish.grizzly.utils.Pair;
 import org.json.JSONObject;
 
@@ -13,7 +14,6 @@ import java.util.*;
 
 public class PostWorkData implements Serializable {
     private String description;
-    private String name;
     private List<Pair<String, Integer>> params;
     private String fileName;
     private boolean isValid;
@@ -26,7 +26,6 @@ public class PostWorkData implements Serializable {
         try {
             String fileData = new String(Files.readAllBytes(Paths.get(fileName))); // Read from file
             JSONObject object = new JSONObject(fileData);
-            name = object.getString("name");
             description = object.getString("description");
 
             if (object.has("objects")) {
@@ -53,7 +52,6 @@ public class PostWorkData implements Serializable {
             return;
         HashMap<String, String> testSr = new HashMap<>();
 
-        testSr.put("name", "subject");
         testSr.put("description", description);
 
         JSONObject object = new JSONObject(testSr);
@@ -87,10 +85,6 @@ public class PostWorkData implements Serializable {
         return description;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public String getFileName() {
         return fileName;
     }
@@ -111,10 +105,6 @@ public class PostWorkData implements Serializable {
 
     public boolean hasParams() {
         return params != null && params.size() > 0;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public boolean hasChild(String command) {

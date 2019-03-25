@@ -1,7 +1,6 @@
-package helper;
+package maincode.helper;
 
-import controllers.PostWorkController;
-import data.Log;
+import maincode.controllers.PostWorkController;
 import org.json.JSONObject;
 
 import java.io.File;

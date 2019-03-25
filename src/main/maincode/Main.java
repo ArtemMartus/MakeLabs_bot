@@ -1,6 +1,8 @@
-package main;
+package maincode;
 
-import data.Log;
+import maincode.controllers.MakeLabs_bot;
+import maincode.data.DataClass;
+import maincode.helper.Log;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 
@@ -32,11 +34,11 @@ public class Main {
 
         PostWorkController.loadWork();
 
-        PostWorkData data = PostWorkController.getData("/");
+        PostWorkData maincode.maincode.data = PostWorkController.getData("/");
         List<PostWorkData> data_children = PostWorkController.getChildren("/");
 
 
-        System.out.println(data.getIURI()+" - " + data.getDescription());
+        System.out.println(maincode.maincode.data.getIURI()+" - " + maincode.maincode.data.getDescription());
         for (PostWorkData child : data_children) {
             System.out.println("\t" + child.getIURI() + " - " + child.getDescription()+" ["+child.getFileName()+"]");
             if(child.hasParams())
@@ -44,11 +46,11 @@ public class Main {
                     System.out.println("\t\t" + child.getIURI()+"/"+pair.getFirst() + " - " + pair.getSecond());
         }
 
-        data = PostWorkController.getData(data_children.get(0).getIURI());
-        data_children = PostWorkController.getChildren(data.getIURI());
+        maincode.maincode.data = PostWorkController.getData(data_children.get(0).getIURI());
+        data_children = PostWorkController.getChildren(maincode.maincode.data.getIURI());
 
 
-        System.out.println(data.getIURI()+" - " + data.getDescription());
+        System.out.println(maincode.maincode.data.getIURI()+" - " + maincode.maincode.data.getDescription());
         for (PostWorkData child : data_children) {
             System.out.println("\t" + child.getIURI() + " - " + child.getDescription()+" ["+child.getFileName()+"]");
             if(child.hasParams())
@@ -59,7 +61,7 @@ public class Main {
 */
 
 
-        Log.setShowLevel(Log.EVERYTHING);
+        Log.setShowLevel(Log.DEBUG);
         ApiContextInitializer.init();
         DataClass dataClass = new DataClass();
         MakeLabs_bot bot = new MakeLabs_bot(dataClass);

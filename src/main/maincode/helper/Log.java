@@ -1,4 +1,4 @@
-package data;
+package maincode.helper;
 
 public class Log {
     public static final int MAIN = 90;
