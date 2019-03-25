@@ -1,65 +1,88 @@
 package maincode.view;
 
+import maincode.controllers.PostWorkController;
 import maincode.data.ContractUser;
+import maincode.data.PostWorkData;
+import maincode.helper.Log;
+import maincode.model.Analytics;
 import maincode.viewmodel.ViewModel;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 
 import java.util.Observable;
 import java.util.Observer;
 
 public class View implements Observer {
     private ViewModel viewModel;
-    private TelegramLongPollingBot longPollingBot;
+    private final Analytics analytics;
+
+    public View() {
+        analytics = Analytics.getInstance();
+    }
 
     @Override
     public void update(Observable o, Object arg) {
         viewModel = (ViewModel) o;
-        longPollingBot = viewModel.getLongPollingBot();
         String gotMessage = viewModel.getHandleMessage();
 
         String inlineId = viewModel.getInlineId();
         String callbackId = viewModel.getCallbackId();
         Integer messageId = viewModel.getMessageId();
         ContractUser contractUser = viewModel.getContractUser();
-        Integer chatId = viewModel.getChatId();
+        Long chatId = viewModel.getChatId();
         User fromUser = viewModel.getFromUser();
 
-        if (inlineId != null && fromUser != null) {
-            handleInlineMessage(inlineId, fromUser);
+        if (messageId == null
+                && inlineId == null
+                && chatId != null
+                && fromUser != null
+                && gotMessage != null
+                && gotMessage.equals("/start")) {
+
+            Integer mid = viewModel.getMessageIdForUser(fromUser.getId());
+            if (mid == null || mid == 0) {
+
+                Message message = analytics.getMakeLabs_bot().sendMessage(".", chatId, fromUser);
+                if (message != null)
+                    mid = message.getMessageId();
+                else
+                    Log.Info("Could not get message id for "
+                            + fromUser.getUserName()
+                            + "["
+                            + fromUser.getId()
+                            + "]");
+
+                viewModel.setMessageIdForUser(fromUser.getId(), mid);
+            }
         }
+
+        MessageHandler inlineMessageHandler = new InlineMessageHandler(fromUser, inlineId);
+
+        MessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
+
+        MessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId, "caption", fromUser);
+
+        PostWorkData workData = null;
+        if (contractUser != null
+                && contractUser.getState() != null
+                && !contractUser.getState().isEmpty()
+                && fromUser != null) {
+
+            CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(), gotMessage);
+            String getUri = commandBuilder.getURI();
+
+            workData = viewModel.getWorkData(getUri, fromUser);
+            if (workData == null) {
+
+                workData = PostWorkController.getData(getUri);
+                viewModel.setWorkData(getUri, workData);
+                Log.Info("Loaded " + getUri + " work data for " + fromUser.getUserName());
+            }
+        }
+
+        InlineKeyboardManager keyboardManager = new InlineKeyboardManager(workData);
+
+
     }
 
-    private void handleInlineMessage(String inlineId, User fromUser) {
-        viewModel.updateMention(fromUser);
-
-        AnswerInlineQuery aiq = new AnswerInlineQuery();
-        InlineQueryResultArticle result = new InlineQueryResultArticle();
-        InputTextMessageContent content = new InputTextMessageContent();
-
-        content
-                .setMessageText("Фриланс площадка для лабораторных работ.\n" +
-                        "Если Вам нужна лабораторная, хотите лучше разобраться\n" +
-                        "в учебных материалах и заработать на этом - значит Вам сюда.\n" +
-                        "@MakeLabs_bot");
-
-        result
-                .setId("my id")
-                .setDescription("Мы сделаем Ваши рутинные задания!")
-                .setInputMessageContent(content)
-                .setTitle("Лабораторные? Самостоятельные? Вам сюда!");
-        aiq
-                .setPersonal(true)
-                .setInlineQueryId(inlineId)
-                .setResults(result);
-
-        try {
-            longPollingBot.execute(aiq);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 }

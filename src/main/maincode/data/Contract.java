@@ -230,6 +230,32 @@ public class Contract implements Serializable {
         }
     }
 
+    public String getCheckoutText(PostWorkData data) {
+        int overall_price = 0;
+        setName(data.getDescription());
+        StringBuilder editedText = new StringBuilder(getName());
+        editedText.append("\n");
+        for (Pair<String, Integer> pair : data.getParams()) {
+            String name = pair.getFirst();
+            boolean checked = isSet(name);
+            int price = pair.getSecond();
+            if (price < 0)
+                continue; // it is not actual payment related button. like 'back' button or so
+            editedText.append(name).append(" ").append(price).append("₴");
+            if (checked) {
+                overall_price += price;
+                editedText.append("\t\t✅ ");
+            } else {
+                editedText.append("\t\t❌ ");
+            }
+            editedText.append("\n");
+        }
+        if (overall_price > 0)
+            editedText.append("\nИтого:\t").append(overall_price).append("₴");
+        setPrice(overall_price);
+        return editedText.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

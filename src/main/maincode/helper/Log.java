@@ -6,6 +6,7 @@ public class Log {
     public static final int DEBUG = 50;
     public static final int VERBOSE = 25;
     public static final int EVERYTHING = 10;
+    public static final int ANALYTICS = 65;
     private static int level;
 
     public static void Info(String str) {

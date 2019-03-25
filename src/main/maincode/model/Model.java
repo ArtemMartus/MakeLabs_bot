@@ -29,7 +29,6 @@ public class Model {
     public void setUser(Integer id, ContractUser user) {
         contractUserMap.put(id, user);
         analytics.checkTime();
-
     }
 
     public Integer getMessageId(Integer uid) {
@@ -38,14 +37,17 @@ public class Model {
         return messageMap.get(uid);
     }
 
-    public void setMessageId(int uid, int messageId) {
-        messageMap.put(uid, messageId);
+    public void setMessageId(Integer uid, Integer messageId) {
+        if (uid != null)
+            messageMap.put(uid, messageId);
         analytics.checkTime();
 
     }
 
-    public PostWorkData getPostWorkData(String uri) {
-        return dataset.get(uri);
+    public PostWorkData getPostWorkData(String uri, User userRequested) {
+        PostWorkData postWorkData = dataset.get(uri);
+        analytics.updatePostWorkDataRequested(postWorkData, userRequested);
+        return postWorkData;
     }
 
     public void setPostWorkData(String uri, PostWorkData postWorkData) {
@@ -58,8 +60,4 @@ public class Model {
         analytics.checkTime();
     }
 
-    public void mentionedInline(User fromUser) {
-        analytics.updateMentions(fromUser);
-        analytics.checkTime();
-    }
 }

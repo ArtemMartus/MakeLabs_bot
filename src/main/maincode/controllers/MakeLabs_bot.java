@@ -5,27 +5,25 @@ import maincode.data.ContractUser;
 import maincode.data.DataClass;
 import maincode.data.PostWorkData;
 import maincode.helper.Log;
+import maincode.model.Analytics;
 import maincode.model.Model;
 import maincode.view.View;
 import maincode.viewmodel.ViewModel;
-import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 
 public class MakeLabs_bot extends TelegramLongPollingBot {
 
@@ -33,24 +31,54 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
     private final View view;
     private final ViewModel viewModel;
     private final DataClass dataClass;
+    private final Analytics analytics;
     private HashMap<String, PostWorkData> dataset;
 
     public MakeLabs_bot(DataClass dataClass) {
         model = new Model();
-        viewModel = new ViewModel(model, this);
+        viewModel = new ViewModel(model);
         view = new View();
         viewModel.addObserver(view);
 
         this.dataClass = dataClass;
         dataset = new HashMap<>();
+        analytics = Analytics.getInstance();
+        analytics.setMakeLabs_bot(this);
 
-        PostWorkController.loadWork();
+        /*PostWorkController.loadWork();
 
         dataset.put("/", PostWorkController.getData("/"));
         dataset.put("/Сделать заказ", PostWorkController.getData("/Сделать заказ"));
-
+*/
     }
 
+
+    public Message sendMessage(String text, Long chatId, User toUser) {
+        analytics.updateSentMessages(toUser);
+
+        SendMessage sendMessage = new SendMessage(chatId, text);
+        Message message = null;
+        try {
+            message = execute(sendMessage);
+        } catch (Exception ex) {
+            Log.Info("Exception in Send:" + ex.getMessage());
+            return null;
+        }
+
+        return message;
+    }
+
+    public Boolean answerInlineQuery(AnswerInlineQuery aiq, User toUser) {
+        analytics.updateAnsweredInlineQueries(toUser);
+
+        Boolean result = null;
+        try {
+            result = execute(aiq);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return result;
+    }
 
     private ContractUser getUser(Update update) {
         Integer userId = getUserId(update);
@@ -109,86 +137,88 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
     }
 
     private InlineKeyboardMarkup getMarkup(ContractUser user) {
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> layout = new ArrayList<>();
+        return null;
 
-        List<InlineKeyboardButton> row = new LinkedList<>();
-        PostWorkData workData = dataset.get(user.getState());
-        if (workData == null) {
-            workData = PostWorkController.getData(user.getState());
-            dataset.put(user.getState(), workData);
-        }
-        List<Pair<String, Integer>> data = workData.getParams();
-
-        Log.Info("Found " + data.size() + " buttons for " + user.getState(), Log.VERBOSE);
-
-        int buttons = data.size();
-        //final int chars_in_a_row = 62; //desktop
-        final int chars_in_a_row = 48;  //mobile
-        final int columns = 3;
-
-        Log.Info("Buttons maincode.maincode.data before sort ");
-        for (Pair<String, Integer> pair : data)
-            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
-
-        data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
-
-        Log.Info("Buttons maincode.maincode.data after sort ");
-        for (Pair<String, Integer> pair : data)
-            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
-
-        List<InlineKeyboardButton> appendToTheEndButtons = new LinkedList<>();
-
-        while (buttons > 0) {
-            for (int i = 0, cch = chars_in_a_row; i < columns && buttons > 0; ++i, buttons--) {
-
-                int current_id = data.size() - buttons;
-                String buttonText = data.get(current_id).getFirst();
-                int price = data.get(current_id).getSecond();
-
-                cch -= buttonText.length();
-                Log.Info("Adding " + buttonText + " to layout", Log.VERBOSE);
-
-                if (price == -99) {
-                    appendToTheEndButtons.add(
-                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
-                    );
-                } else {
-                    row.add(
-                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
-                    );
-                }
-
-
-                if (cch <= 0 && row.size() >= 1 ||
-                        (current_id + 1 < data.size() &&
-                                cch < data.get(current_id + 1).getFirst().length())) {
-                    layout.add(row);
-                    row = new LinkedList<>();
-                    //buttonText = shortenName(buttonText);
-                }
-
-            }
-            if (row.size() > 0) {
-                layout.add(row);
-                row = new LinkedList<>();
-            }
-        }
-
-        /*
-        for (InButton button : maincode.maincode.data) {
-            Log.Info("Adding " + button.getText() + "(" + button.getCode() + ") to layout", Log.VERBOSE);
-            String buttonText = button.getText();
-            if (buttonText.length() > chars)
-                buttonText = shortenName(buttonText);
-            row.add(
-                    new InlineKeyboardButton(buttonText).setCallbackData(button.getCode())
-            );
-        }*/
-
-        layout.add(appendToTheEndButtons);
-
-        return markup.setKeyboard(layout);
+//        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+//        List<List<InlineKeyboardButton>> layout = new ArrayList<>();
+//
+//        List<InlineKeyboardButton> row = new LinkedList<>();
+//        PostWorkData workData = dataset.get(user.getState());
+//        if (workData == null) {
+//            workData = PostWorkController.getData(user.getState());
+//            dataset.put(user.getState(), workData);
+//        }
+//        List<Pair<String, Integer>> data = workData.getParams();
+//
+//        Log.Info("Found " + data.size() + " buttons for " + user.getState(), Log.VERBOSE);
+//
+//        int buttons = data.size();
+//        //final int chars_in_a_row = 62; //desktop
+//        final int chars_in_a_row = 48;  //mobile
+//        final int columns = 3;
+//
+//        Log.Info("Buttons maincode.maincode.data before sort ");
+//        for (Pair<String, Integer> pair : data)
+//            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
+//
+//        data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
+//
+//        Log.Info("Buttons maincode.maincode.data after sort ");
+//        for (Pair<String, Integer> pair : data)
+//            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
+//
+//        List<InlineKeyboardButton> appendToTheEndButtons = new LinkedList<>();
+//
+//        while (buttons > 0) {
+//            for (int i = 0, cch = chars_in_a_row; i < columns && buttons > 0; ++i, buttons--) {
+//
+//                int current_id = data.size() - buttons;
+//                String buttonText = data.get(current_id).getFirst();
+//                int price = data.get(current_id).getSecond();
+//
+//                cch -= buttonText.length();
+//                Log.Info("Adding " + buttonText + " to layout", Log.VERBOSE);
+//
+//                if (price == -99) {
+//                    appendToTheEndButtons.add(
+//                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
+//                    );
+//                } else {
+//                    row.add(
+//                            new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
+//                    );
+//                }
+//
+//
+//                if (cch <= 0 && row.size() >= 1 ||
+//                        (current_id + 1 < data.size() &&
+//                                cch < data.get(current_id + 1).getFirst().length())) {
+//                    layout.add(row);
+//                    row = new LinkedList<>();
+//                    //buttonText = shortenName(buttonText);
+//                }
+//
+//            }
+//            if (row.size() > 0) {
+//                layout.add(row);
+//                row = new LinkedList<>();
+//            }
+//        }
+//
+//        /*
+//        for (InButton button : maincode.maincode.data) {
+//            Log.Info("Adding " + button.getText() + "(" + button.getCode() + ") to layout", Log.VERBOSE);
+//            String buttonText = button.getText();
+//            if (buttonText.length() > chars)
+//                buttonText = shortenName(buttonText);
+//            row.add(
+//                    new InlineKeyboardButton(buttonText).setCallbackData(button.getCode())
+//            );
+//        }*/
+//
+//        layout.add(appendToTheEndButtons);
+//
+//        return markup.setKeyboard(layout);
     }
 
     private int testMessageId(Integer uid, Long chatId, int messageId) {
@@ -236,43 +266,47 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendCallbackAnswer(CallbackQuery query, String caption) {
+    public Boolean sendCallbackAnswer(String queryID, String caption, User toUser) {
+        analytics.updateCallbackAnswered(toUser);
+
         AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
-        answerCallbackQuery.setCallbackQueryId(query.getId());
-        if (!caption.isEmpty())
+        answerCallbackQuery.setCallbackQueryId(queryID);
+        if (caption != null && !caption.isEmpty())
             answerCallbackQuery.setText(caption);
         try {
-            execute(answerCallbackQuery);
+            return execute(answerCallbackQuery);
         } catch (Exception ex) {
-            Log.Info("Exception in sendCallbackAnswer:" + ex.getMessage());
+            Log.Info("Exception in sendCallbackAnswer:" + ex.getMessage(), Log.VERBOSE);
             //ex.printStackTrace();
         }
+        return false;
     }
 
     private String getCheckoutText(Contract contract, PostWorkData data) {
-        int overall_price = 0;
-        contract.setName(data.getDescription());
-        StringBuilder editedText = new StringBuilder(contract.getName());
-        editedText.append("\n");
-        for (Pair<String, Integer> pair : data.getParams()) {
-            String name = pair.getFirst();
-            boolean checked = contract.isSet(name);
-            int price = pair.getSecond();
-            if (price < 0)
-                continue; // it is not actual payment related button. like 'back' button or so
-            editedText.append(name).append(" ").append(price).append("₴");
-            if (checked) {
-                overall_price += price;
-                editedText.append("\t\t✅ ");
-            } else {
-                editedText.append("\t\t❌ ");
-            }
-            editedText.append("\n");
-        }
-        if (overall_price > 0)
-            editedText.append("\nИтого:\t").append(overall_price).append("₴");
-        contract.setPrice(overall_price);
-        return editedText.toString();
+//        int overall_price = 0;
+//        contract.setName(data.getDescription());
+//        StringBuilder editedText = new StringBuilder(contract.getName());
+//        editedText.append("\n");
+//        for (Pair<String, Integer> pair : data.getParams()) {
+//            String name = pair.getFirst();
+//            boolean checked = contract.isSet(name);
+//            int price = pair.getSecond();
+//            if (price < 0)
+//                continue; // it is not actual payment related button. like 'back' button or so
+//            editedText.append(name).append(" ").append(price).append("₴");
+//            if (checked) {
+//                overall_price += price;
+//                editedText.append("\t\t✅ ");
+//            } else {
+//                editedText.append("\t\t❌ ");
+//            }
+//            editedText.append("\n");
+//        }
+//        if (overall_price > 0)
+//            editedText.append("\nИтого:\t").append(overall_price).append("₴");
+//        contract.setPrice(overall_price);
+//        return editedText.toString();
+        return null;
     }
 
     private String userDataString(User user) {
@@ -297,49 +331,47 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
 
     void answerInline(Update update) {
 
-        String id = update.getInlineQuery().getId();
-        if (id == null || id.isEmpty()) {
-            Log.Info("Got a strange inline query without an id");
-            return;
-        } else
-            Log.Info("Inline query " + id);
-        Log.Info("Someone is mentioning this bot inline " + getDate(), Log.MAIN);
-
-        User fromUser = update.getInlineQuery().getFrom();
-        if (fromUser != null)
-            Log.Info(userDataString(fromUser), Log.EXTENDED);
-
-        AnswerInlineQuery aiq = new AnswerInlineQuery();
-        InlineQueryResultArticle result = new InlineQueryResultArticle();
-        InputTextMessageContent content = new InputTextMessageContent();
-
-        content
-                .setMessageText("Фриланс площадка для лабораторных работ.\n" +
-                        "Если Вам нужна лабораторная, хотите лучше разобраться\n" +
-                        "в учебных материалах и заработать на этом - значит Вам сюда.\n" +
-                        "@MakeLabs_bot");
-
-        result
-                .setId(id)
-                .setDescription("Мы сделаем Ваши рутинные задания!")
-                .setInputMessageContent(content)
-                .setTitle("Лабораторные? Самостоятельные? Вам сюда!");
-        aiq
-                .setPersonal(true)
-                .setInlineQueryId(id)
-                .setResults(result);
-
-        try {
-            execute(aiq);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        String id = update.getInlineQuery().getId();
+//        if (id == null || id.isEmpty()) {
+//            Log.Info("Got a strange inline query without an id");
+//            return;
+//        } else
+//            Log.Info("Inline query " + id);
+//        Log.Info("Someone is mentioning this bot inline " + getDate(), Log.MAIN);
+//
+//        User fromUser = update.getInlineQuery().getFrom();
+//        if (fromUser != null)
+//            Log.Info(userDataString(fromUser), Log.EXTENDED);
+//
+//        AnswerInlineQuery aiq = new AnswerInlineQuery();
+//        InlineQueryResultArticle result = new InlineQueryResultArticle();
+//        InputTextMessageContent content = new InputTextMessageContent();
+//
+//        content
+//                .setMessageText("Фриланс площадка для лабораторных работ.\n" +
+//                        "Если Вам нужна лабораторная, хотите лучше разобраться\n" +
+//                        "в учебных материалах и заработать на этом - значит Вам сюда.\n" +
+//                        "@MakeLabs_bot");
+//
+//        result
+//                .setId(id)
+//                .setDescription("Мы сделаем Ваши рутинные задания!")
+//                .setInputMessageContent(content)
+//                .setTitle("Лабораторные? Самостоятельные? Вам сюда!");
+//        aiq
+//                .setPersonal(true)
+//                .setInlineQueryId(id)
+//                .setResults(result);
+//
+//        try {
+//            execute(aiq);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-
-        Log.Info("Got an update " + update.getUpdateId() + "\n", Log.MAIN);
 
         viewModel.setUpdate(update);
 

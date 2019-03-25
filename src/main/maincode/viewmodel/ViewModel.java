@@ -1,9 +1,10 @@
 package maincode.viewmodel;
 
 import maincode.data.ContractUser;
+import maincode.data.PostWorkData;
 import maincode.helper.Log;
+import maincode.model.Analytics;
 import maincode.model.Model;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -15,19 +16,17 @@ import java.util.Observable;
 public class ViewModel extends Observable {
 
     private final Model model;
-    private final TelegramLongPollingBot longPollingBot;
     private Update update;
     private ContractUser contractUser;
     private String handleMessage;
     private Integer messageId;
     private String callbackId;
     private String inlineId;
-    private Integer chatId;
+    private Long chatId;
     private User fromUser;
 
-    public ViewModel(Model model, TelegramLongPollingBot bot) {
+    public ViewModel(Model model) {
         this.model = model;
-        longPollingBot = bot;
     }
 
     public void setUpdate(Update update) {
@@ -66,7 +65,7 @@ public class ViewModel extends Observable {
         {
             Message localMessage = message == null ? (callbackQuery != null ? callbackQuery.getMessage() : null) : message;
             if (localMessage != null) {
-                chatId = localMessage.getMessageId();
+                chatId = localMessage.getChatId();
             } else {
                 chatId = null;
             }
@@ -79,7 +78,12 @@ public class ViewModel extends Observable {
                 handleMessage = inlineQuery != null ? inlineQuery.getQuery() : null;
             }
 
-            if (message != null && handleMessage != null) {
+            if (message != null
+                    && handleMessage != null
+                    && !handleMessage.isEmpty()
+                    && chatId != null
+                    && fromUser != null) {
+
                 switch (handleMessage) {
                     case "/start": {
                         messageId = null;
@@ -89,6 +93,8 @@ public class ViewModel extends Observable {
                         break;
                     }
                     case "/help": {
+                        Analytics.getInstance().getMakeLabs_bot().sendMessage("Введите /start чтобы вызвать меню",
+                                chatId, fromUser);
                         break;
                     }
                     default:
@@ -96,10 +102,10 @@ public class ViewModel extends Observable {
             }
         }
 
-        model.saveContractUser(contractUser);
-
         setChanged();
         notifyObservers();
+
+        model.saveContractUser(contractUser);
 
     }
 
@@ -123,9 +129,6 @@ public class ViewModel extends Observable {
         return usr;
     }
 
-    public TelegramLongPollingBot getLongPollingBot() {
-        return longPollingBot;
-    }
 
     public ContractUser getContractUser() {
         return contractUser;
@@ -145,6 +148,13 @@ public class ViewModel extends Observable {
 
     public Integer getMessageId() {
         return messageId;
+    }
+
+    public Integer getMessageIdForUser(Integer uid) {
+        if (uid == null) {
+            return null;
+        }
+        return model.getMessageId(uid);
     }
 
     public void setMessageId(Integer messageId) {
@@ -167,11 +177,11 @@ public class ViewModel extends Observable {
         this.inlineId = inlineId;
     }
 
-    public Integer getChatId() {
+    public Long getChatId() {
         return chatId;
     }
 
-    public void setChatId(Integer chatId) {
+    public void setChatId(Long chatId) {
         this.chatId = chatId;
     }
 
@@ -179,7 +189,15 @@ public class ViewModel extends Observable {
         return fromUser;
     }
 
-    public void updateMention(User fromUser) {
-        model.mentionedInline(fromUser);
+    public void setMessageIdForUser(Integer id, Integer mid) {
+        model.setMessageId(id, mid);
+    }
+
+    public PostWorkData getWorkData(String state, User userRequested) {
+        return model.getPostWorkData(state, userRequested);
+    }
+
+    public void setWorkData(String state, PostWorkData workData) {
+        model.setPostWorkData(state, workData);
     }
 }

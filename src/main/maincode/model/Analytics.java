@@ -1,5 +1,7 @@
 package maincode.model;
 
+import maincode.controllers.MakeLabs_bot;
+import maincode.data.PostWorkData;
 import maincode.helper.Log;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -13,8 +15,11 @@ import java.util.Map;
 public class Analytics {
     private static Analytics mInstance;
     private Long lastunixtime = 0L;
-    private int mentionedInline = 0;
-    private Map<User, Integer> mentionedBy = new HashMap<>();
+    private MakeLabs_bot makeLabs_bot;
+    private Map<User, Integer> answeredQueriesTo = new HashMap<>();
+    private Map<User, Integer> sentMessagesTo = new HashMap<>();
+    private Map<User, Integer> callbacksAnsweredTo = new HashMap<>();
+    private Map<PostWorkData, Map<User, Integer>> postWorkDataRequested = new HashMap<>();
 
 
     public static Analytics getInstance() {
@@ -27,15 +32,24 @@ public class Analytics {
         return mInstance;
     }
 
-    public void updateMentions(User fromUser) {
-        mentionedInline++;
-        Integer lastKey = mentionedBy.get(fromUser);
-        if (lastKey == null)
-            lastKey = 1;
-        else
-            lastKey++;
-        mentionedBy.put(fromUser, lastKey);
-        Log.Info(userDataString(fromUser) + "\n\tMentioned " + lastKey + " times already", Log.EVERYTHING);
+    public MakeLabs_bot getMakeLabs_bot() {
+        return makeLabs_bot;
+    }
+
+    public void setMakeLabs_bot(MakeLabs_bot makeLabs_bot) {
+        this.makeLabs_bot = makeLabs_bot;
+    }
+
+    public void updateAnsweredInlineQueries(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(answeredQueriesTo, toUser);
+        Log.Info(userDataString(toUser) + "\n\tanswered " + lastKey + " queries already", Log.EVERYTHING);
+    }
+
+    public void updateSentMessages(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(sentMessagesTo, toUser);
+        Log.Info(userDataString(toUser) + "\n\tgot " + lastKey + " messages already", Log.EVERYTHING);
     }
 
     public void checkTime() {
@@ -46,15 +60,56 @@ public class Analytics {
     }
 
     public void saveCurrent(Long unixtimestamp) {
-        Log.Info("Stats from  " + getDate(lastunixtime) + " till " + getDate(unixtimestamp) +
-                "\n\tMentioned inline : " + mentionedInline);
-        for (Map.Entry<User, Integer> entry : mentionedBy.entrySet()) {
-            Log.Info(userDataString(entry.getKey()) + "\t--\t--\t" + entry.getValue() + " times");
+        Log.Info("Stats from  " + getDate(lastunixtime) + " till " + getDate(unixtimestamp), Log.ANALYTICS);
+        for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
+            Log.Info(userDataString(
+                    entry.getKey())
+                    + "\t--\t--\t answered his queries "
+                    + entry.getValue()
+                    + " times", Log.ANALYTICS);
+        }
+        for (Map.Entry<User, Integer> entry : sentMessagesTo.entrySet()) {
+            Log.Info(userDataString(
+                    entry.getKey())
+                    + "\t--\t--\t sent "
+                    + entry.getValue()
+                    + " messages to user", Log.ANALYTICS);
+        }
+        for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
+            Log.Info(userDataString(
+                    entry.getKey())
+                    + "\t--\t--\t answered "
+                    + entry.getValue()
+                    + " callbacks from user", Log.ANALYTICS);
+        }
+        for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
+            for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
+                Log.Info(entry.getKey().getIURI()
+                        + "("
+                        + entry.getKey().getDescription()
+                        + ")\t--\t--\t was requested by "
+                        + userDataString(subentry.getKey())
+                        + "\t"
+                        + subentry.getValue()
+                        + " times", Log.ANALYTICS);
+            }
         }
 
-        mentionedBy.clear();
-        mentionedInline = 0;
+        postWorkDataRequested.clear();
+        callbacksAnsweredTo.clear();
+        sentMessagesTo.clear();
+        answeredQueriesTo.clear();
         lastunixtime = unixtimestamp;
+    }
+
+    private Integer fillInUserMap(Map<User, Integer> map, User toUser) {
+        Integer lastKey = map.get(toUser);
+        lastKey = lastKey == null ? 1 : ++lastKey;
+        map.put(toUser, lastKey);
+
+        checkTime();
+
+        return lastKey;
     }
 
     private String getDate(Long time) {
@@ -75,5 +130,28 @@ public class Analytics {
         return str;
     }
 
+    public void updateCallbackAnswered(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(callbacksAnsweredTo, toUser);
+        Log.Info(userDataString(toUser) + "\n\tgot " + lastKey + " callback answers already", Log.EVERYTHING);
 
+    }
+
+    public void updatePostWorkDataRequested(PostWorkData postWorkData, User userRequested) {
+        if (postWorkData == null) return;
+        checkTime();
+        Map<User, Integer> dataPairRequested = postWorkDataRequested.get(postWorkData);
+        if (dataPairRequested == null) {
+            dataPairRequested = new HashMap<>();
+            dataPairRequested.put(userRequested, 1);
+        } else {
+            Integer times = dataPairRequested.get(userRequested);
+            times = times == null ? 1 : ++times;
+            dataPairRequested.put(userRequested, times);
+        }
+
+        postWorkDataRequested.put(postWorkData, dataPairRequested);
+
+        Log.Info(postWorkData.getDescription() + " requested by " + userRequested.getUserName() + "[" + userRequested.getId() + "]", Log.EVERYTHING);
+    }
 }
