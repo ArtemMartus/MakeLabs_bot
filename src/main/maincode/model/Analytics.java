@@ -43,24 +43,25 @@ public class Analytics {
     public void updateAnsweredInlineQueries(User toUser) {
         if (toUser == null) return;
         Integer lastKey = fillInUserMap(answeredQueriesTo, toUser);
-        Log.Info(userDataString(toUser) + "\n\tanswered " + lastKey + " queries already", Log.EVERYTHING);
+        Log.Info(userDataString(toUser) + "\t\tanswered " + lastKey + " queries already", Log.EVERYTHING);
     }
 
     public void updateSentMessages(User toUser) {
         if (toUser == null) return;
         Integer lastKey = fillInUserMap(sentMessagesTo, toUser);
-        Log.Info(userDataString(toUser) + "\n\tgot " + lastKey + " messages already", Log.EVERYTHING);
+        Log.Info(userDataString(toUser) + "\t\tgot " + lastKey + " messages already", Log.EVERYTHING);
     }
 
     public void checkTime() {
-        Long current = Calendar.getInstance().getTime().getTime() / 1000L;
-        if (current - lastunixtime > 10L) {
+        Long current = Calendar.getInstance().getTime().getTime() / 1000;
+        //System.out.println("Check time \n\t"+current+"\n\t"+lastunixtime);
+        if (current - lastunixtime > 60) {
             saveCurrent(current);
         }
     }
 
     public void saveCurrent(Long unixtimestamp) {
-        Log.Info("Stats from  " + getDate(lastunixtime) + " till " + getDate(unixtimestamp), Log.ANALYTICS);
+        Log.Info("\nStats from  " + getDate(lastunixtime) + " till " + getDate(unixtimestamp), Log.ANALYTICS);
         for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
             Log.Info(userDataString(
                     entry.getKey())
@@ -84,12 +85,12 @@ public class Analytics {
         }
         for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
             for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
-                Log.Info(entry.getKey().getIURI()
-                        + "("
-                        + entry.getKey().getDescription()
-                        + ")\t--\t--\t was requested by "
-                        + userDataString(subentry.getKey())
-                        + "\t"
+                Log.Info(userDataString(subentry.getKey())
+                        + " visited URI:'"
+                        + entry.getKey().getIURI()
+                        + "'\t=\t("
+                        + shortenString(entry.getKey().getDescription())
+                        + ")\t--\t--\t was requested by user\t"
                         + subentry.getValue()
                         + " times", Log.ANALYTICS);
             }
@@ -100,6 +101,15 @@ public class Analytics {
         sentMessagesTo.clear();
         answeredQueriesTo.clear();
         lastunixtime = unixtimestamp;
+
+        Log.Info("Stats end --------", Log.ANALYTICS);
+    }
+
+    private String shortenString(String str) {
+        String out = str;
+        if (str.length() > 24)
+            out = out.substring(0, 16) + "..." + out.substring(out.length() - 4);
+        return out;
     }
 
     private Integer fillInUserMap(Map<User, Integer> map, User toUser) {
@@ -133,7 +143,7 @@ public class Analytics {
     public void updateCallbackAnswered(User toUser) {
         if (toUser == null) return;
         Integer lastKey = fillInUserMap(callbacksAnsweredTo, toUser);
-        Log.Info(userDataString(toUser) + "\n\tgot " + lastKey + " callback answers already", Log.EVERYTHING);
+        Log.Info(userDataString(toUser) + "\t\tgot " + lastKey + " callback answers already", Log.EVERYTHING);
 
     }
 

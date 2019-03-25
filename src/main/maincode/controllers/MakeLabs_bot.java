@@ -75,9 +75,9 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
         try {
             result = execute(aiq);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Log.Info("An issue in answerInlineQuery - " + ex.getMessage());
         }
-        return result;
+        return result != null && result;
     }
 
     private ContractUser getUser(Update update) {

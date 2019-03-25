@@ -1,5 +1,6 @@
 package maincode.viewmodel;
 
+import maincode.controllers.PostWorkController;
 import maincode.data.ContractUser;
 import maincode.data.PostWorkData;
 import maincode.helper.Log;
@@ -27,6 +28,7 @@ public class ViewModel extends Observable {
 
     public ViewModel(Model model) {
         this.model = model;
+        PostWorkController.loadWork();
     }
 
     public void setUpdate(Update update) {

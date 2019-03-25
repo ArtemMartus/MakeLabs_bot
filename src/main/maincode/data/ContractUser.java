@@ -102,10 +102,18 @@ public class ContractUser implements Serializable {
             JSONObject object = new JSONObject(fileData);
 
             id = object.getInt("id");
-            username = object.getString("username");
-            firstname = object.getString("firstname");
-            state = object.getString("state");
-            messageId = object.getInt("messageId");
+            if (object.has("username"))
+                username = object.getString("username");
+            if (object.has("firstname"))
+                firstname = object.getString("firstname");
+            if (object.has("state"))
+                state = object.getString("state");
+            else
+                state = "/";
+            if (object.has("messageId"))
+                messageId = object.getInt("messageId");
+            else
+                messageId = null;
 
             if (object.has("contracts")) {
                 JSONArray jsonArray = object.getJSONArray("contracts");

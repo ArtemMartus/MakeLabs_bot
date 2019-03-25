@@ -60,8 +60,7 @@ public class Main {
 
 */
 
-
-        Log.setShowLevel(Log.DEBUG);
+        Log.setShowLevel(Log.EVERYTHING);
         ApiContextInitializer.init();
         DataClass dataClass = new DataClass();
         MakeLabs_bot bot = new MakeLabs_bot(dataClass);
