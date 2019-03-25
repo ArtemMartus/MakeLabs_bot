@@ -57,32 +57,38 @@ public class View implements Observer {
         }
 
         MessageHandler inlineMessageHandler = new InlineMessageHandler(fromUser, inlineId);
-
-        MessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
+        if (inlineMessageHandler.isValid()) {
+            inlineMessageHandler.handle();
+        }
 
         MessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId, "caption", fromUser);
 
-        PostWorkData workData = null;
         if (contractUser != null
                 && contractUser.getState() != null
                 && !contractUser.getState().isEmpty()
                 && fromUser != null) {
 
             CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(), gotMessage);
-            String getUri = commandBuilder.getURI();
+            String getUri = commandBuilder.getValidURI();
 
-            workData = viewModel.getWorkData(getUri, fromUser);
+            PostWorkData workData = viewModel.getWorkData(getUri, fromUser);
             if (workData == null) {
 
                 workData = PostWorkController.getData(getUri);
                 viewModel.setWorkData(getUri, workData);
                 Log.Info("Loaded " + getUri + " work data for " + fromUser.getUserName());
             }
+
+            InlineKeyboardManager keyboardManager = new InlineKeyboardManager(workData);
+
+            //TODO go write a bit of code in here about editing message and assigning keyboard
         }
 
-        InlineKeyboardManager keyboardManager = new InlineKeyboardManager(workData);
 
-
+        //default behavior
+        MessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
+        if (regularMessageHandler.isValid())
+            regularMessageHandler.handle();
     }
 
 }
