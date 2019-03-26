@@ -19,6 +19,7 @@ public class Model {
         messageMap = new HashMap<>();
         dataset = new HashMap<>();
         analytics = Analytics.getInstance();
+        Log.Info("Model initialized");
     }
 
     public ContractUser getUser(Integer id) {
@@ -26,8 +27,10 @@ public class Model {
         return contractUserMap.get(id);
     }
 
-    public void setUser(Integer id, ContractUser user) {
-        contractUserMap.put(id, user);
+    public void setUser(ContractUser user) {
+        if (user == null)
+            return;
+        contractUserMap.put(user.getId(), user);
         analytics.checkTime();
     }
 
@@ -57,6 +60,7 @@ public class Model {
 
     public void saveContractUser(ContractUser contractUser) {
         contractUser.save();
+        setUser(contractUser);
         analytics.checkTime();
     }
 

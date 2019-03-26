@@ -18,6 +18,7 @@ public class Analytics {
     private MakeLabs_bot makeLabs_bot;
     private Map<User, Integer> answeredQueriesTo = new HashMap<>();
     private Map<User, Integer> sentMessagesTo = new HashMap<>();
+    private Map<User, Integer> editedMessagesTo = new HashMap<>();
     private Map<User, Integer> callbacksAnsweredTo = new HashMap<>();
     private Map<PostWorkData, Map<User, Integer>> postWorkDataRequested = new HashMap<>();
 
@@ -38,18 +39,6 @@ public class Analytics {
 
     public void setMakeLabs_bot(MakeLabs_bot makeLabs_bot) {
         this.makeLabs_bot = makeLabs_bot;
-    }
-
-    public void updateAnsweredInlineQueries(User toUser) {
-        if (toUser == null) return;
-        Integer lastKey = fillInUserMap(answeredQueriesTo, toUser);
-        Log.Info(userDataString(toUser) + "\t\tanswered " + lastKey + " queries already", Log.EVERYTHING);
-    }
-
-    public void updateSentMessages(User toUser) {
-        if (toUser == null) return;
-        Integer lastKey = fillInUserMap(sentMessagesTo, toUser);
-        Log.Info(userDataString(toUser) + "\t\tgot " + lastKey + " messages already", Log.EVERYTHING);
     }
 
     public void checkTime() {
@@ -76,6 +65,13 @@ public class Analytics {
                     + entry.getValue()
                     + " messages to user", Log.ANALYTICS);
         }
+        for (Map.Entry<User, Integer> entry : editedMessagesTo.entrySet()) {
+            Log.Info(userDataString(
+                    entry.getKey())
+                    + "\t--\t--\t edited "
+                    + entry.getValue()
+                    + " messages with user", Log.ANALYTICS);
+        }
         for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
             Log.Info(userDataString(
                     entry.getKey())
@@ -99,6 +95,7 @@ public class Analytics {
         postWorkDataRequested.clear();
         callbacksAnsweredTo.clear();
         sentMessagesTo.clear();
+        editedMessagesTo.clear();
         answeredQueriesTo.clear();
         lastunixtime = unixtimestamp;
 
@@ -129,6 +126,18 @@ public class Analytics {
         return df.format(today);
     }
 
+
+    public void updateAnsweredInlineQueries(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(answeredQueriesTo, toUser);
+        Log.Info(userDataString(toUser) + "\t\tanswered " + lastKey + " queries already", Log.EVERYTHING);
+    }
+
+    public void updateSentMessages(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(sentMessagesTo, toUser);
+        Log.Info(userDataString(toUser) + "\t\tgot " + lastKey + " messages already", Log.EVERYTHING);
+    }
 
     private String userDataString(User user) {
         String str = "[" + user.getId() + ":";
@@ -163,5 +172,11 @@ public class Analytics {
         postWorkDataRequested.put(postWorkData, dataPairRequested);
 
         Log.Info(postWorkData.getDescription() + " requested by " + userRequested.getUserName() + "[" + userRequested.getId() + "]", Log.EVERYTHING);
+    }
+
+    public void updateEditedMessages(User toUser) {
+        if (toUser == null) return;
+        Integer lastKey = fillInUserMap(editedMessagesTo, toUser);
+        Log.Info(userDataString(toUser) + "\t\tedited " + lastKey + " messages to him already", Log.EVERYTHING);
     }
 }

@@ -6,7 +6,6 @@ import maincode.data.PostWorkData;
 import maincode.helper.Log;
 import maincode.model.Analytics;
 import maincode.viewmodel.ViewModel;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.Observable;
@@ -18,6 +17,7 @@ public class View implements Observer {
 
     public View() {
         analytics = Analytics.getInstance();
+        Log.Info("View initialized");
     }
 
     @Override
@@ -32,41 +32,22 @@ public class View implements Observer {
         Long chatId = viewModel.getChatId();
         User fromUser = viewModel.getFromUser();
 
-        if (messageId == null
-                && inlineId == null
-                && chatId != null
-                && fromUser != null
-                && gotMessage != null
-                && gotMessage.equals("/start")) {
-
-            Integer mid = viewModel.getMessageIdForUser(fromUser.getId());
-            if (mid == null || mid == 0) {
-
-                Message message = analytics.getMakeLabs_bot().sendMessage(".", chatId, fromUser);
-                if (message != null)
-                    mid = message.getMessageId();
-                else
-                    Log.Info("Could not get message id for "
-                            + fromUser.getUserName()
-                            + "["
-                            + fromUser.getId()
-                            + "]");
-
-                viewModel.setMessageIdForUser(fromUser.getId(), mid);
-            }
-        }
-
-        MessageHandler inlineMessageHandler = new InlineMessageHandler(fromUser, inlineId);
+        InlineMessageHandler inlineMessageHandler = new InlineMessageHandler(fromUser, inlineId);
         if (inlineMessageHandler.isValid()) {
             inlineMessageHandler.handle();
         }
 
-        MessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId, "caption", fromUser);
-
         if (contractUser != null
                 && contractUser.getState() != null
                 && !contractUser.getState().isEmpty()
-                && fromUser != null) {
+                && fromUser != null
+                && chatId != null
+//                && messageId != null
+        ) {
+
+            CallbackMessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId,
+                    "new message", fromUser);
+            RegularMessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
 
             CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(), gotMessage);
             String getUri = commandBuilder.getValidURI();
@@ -81,14 +62,15 @@ public class View implements Observer {
 
             InlineKeyboardManager keyboardManager = new InlineKeyboardManager(workData);
 
-            //TODO go write a bit of code in here about editing message and assigning keyboard
+            UserActionHandler actionHandler = new UserActionHandler(regularMessageHandler,
+                    callbackMessageHandler, contractUser,
+                    keyboardManager, messageId, commandBuilder, viewModel);
+
+            if (actionHandler.isValid())
+                actionHandler.handle();
+
         }
 
-
-        //default behavior
-        MessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
-        if (regularMessageHandler.isValid())
-            regularMessageHandler.handle();
     }
 
 }

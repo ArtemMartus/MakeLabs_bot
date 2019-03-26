@@ -14,6 +14,7 @@ import java.util.List;
 public class PostWorkController {
 
     private static final String base_path = "./post_work";
+    private static boolean loaded = false;
     private static HashMap<String, PostWorkData> workMap = new HashMap<>();
 
     public static String internPath(String path) {
@@ -81,11 +82,17 @@ public class PostWorkController {
         } else
             loadDirectory(dataDirectory);
 
+        loaded = true;
+        Log.Info("PostWorkController initialized");
+
         PostWorkData make = getData("/Сделать заказ");
-        make = updateData(make);
+        updateData(make);
     }
 
     private static PostWorkData updateData(PostWorkData data) {
+        if (!loaded)
+            loadWork();
+
         List<PostWorkData> make_children = getChildren(data.getIURI());
         List<Pair<String, Integer>> make_buttons = data.getParams();
         if (make_buttons.size() < make_children.size() + 1) {
@@ -101,10 +108,15 @@ public class PostWorkController {
     }
 
     public static boolean pathExists(String uri) {
+        if (!loaded)
+            loadWork();
         return workMap.containsKey(uri);
     }
 
     public static PostWorkData getData(String uri) {
+        if (!loaded)
+            loadWork();
+
         PostWorkData data = workMap.get(uri);
         if (data != null)
             data = updateData(data);
@@ -112,6 +124,9 @@ public class PostWorkController {
     }
 
     public static List<PostWorkData> getChildren(String uri) {
+        if (!loaded)
+            loadWork();
+
         List<PostWorkData> children = new ArrayList<>();
         File dir = new File(base_path + uri);
         File[] files = dir.listFiles();
@@ -129,17 +144,17 @@ public class PostWorkController {
         return children;
     }
 
-    public static String getLastName(String path) {
-        int lastSlash = path.lastIndexOf("/");
-        return path.substring(lastSlash + 1, path.length());
-    }
+//    public static String getLastName(String path) {
+//        int lastSlash = path.lastIndexOf("/");
+//        return path.substring(lastSlash + 1, path.length());
+//    }
 
     public static String getBase_path() {
         return base_path;
     }
 
     public static final String remLast(String str) {
-        if (str.length() == 1 || str.indexOf("/", 0) == -1)
+        if (str.length() == 1 || str.indexOf("/") == -1)
             return str;
         int slash = str.lastIndexOf("/");
         if (slash == 0)
@@ -148,6 +163,9 @@ public class PostWorkController {
     }
 
     public static String validifyPath(String string) {
+        if (!loaded)
+            loadWork();
+
         Path path = Paths.get(string);
         if (pathExists(string))
             return string;

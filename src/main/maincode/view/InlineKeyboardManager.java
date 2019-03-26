@@ -10,16 +10,33 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class InlineKeyboardManager {
-    private final PostWorkData workData;
+public class InlineKeyboardManager implements MessageHandler {
+    private PostWorkData workData;
+    private InlineKeyboardMarkup keyboardMarkup;
 
     public InlineKeyboardManager(PostWorkData workData) {
         this.workData = workData;
     }
 
     public InlineKeyboardMarkup getMarkup() {
+        if (keyboardMarkup == null)
+            handle();
+        return keyboardMarkup;
+    }
+
+    public PostWorkData getWorkData() {
+        return workData;
+    }
+
+    public void updateData(PostWorkData workData) {
+
+        if (this.keyboardMarkup != null
+                && this.workData == workData)
+            return;
+
+        this.workData = workData;
         if (workData == null)
-            return null;
+            return;
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> layout = new ArrayList<>();
@@ -85,6 +102,17 @@ public class InlineKeyboardManager {
 
         layout.add(appendToTheEndButtons);
 
-        return markup.setKeyboard(layout);
+        keyboardMarkup = markup.setKeyboard(layout);
+    }
+
+    @Override
+    public void handle() {
+        updateData(workData);
+    }
+
+    @Override
+    public boolean isValid() {
+        return workData != null
+                && workData.isValid();
     }
 }

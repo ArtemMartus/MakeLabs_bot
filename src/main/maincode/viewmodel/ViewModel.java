@@ -1,6 +1,5 @@
 package maincode.viewmodel;
 
-import maincode.controllers.PostWorkController;
 import maincode.data.ContractUser;
 import maincode.data.PostWorkData;
 import maincode.helper.Log;
@@ -28,7 +27,7 @@ public class ViewModel extends Observable {
 
     public ViewModel(Model model) {
         this.model = model;
-        PostWorkController.loadWork();
+        Log.Info("ViewModel initialized");
     }
 
     public void setUpdate(Update update) {
@@ -72,6 +71,9 @@ public class ViewModel extends Observable {
                 chatId = null;
             }
             messageId = contractUser.getMessageId();
+            if (messageId == null)
+                messageId = getMessageIdForUser(fromUser.getId());
+
             handleMessage = message != null && message.getText() != null ?
                     message.getText() :
                     (callbackQuery != null ?
@@ -79,29 +81,11 @@ public class ViewModel extends Observable {
             if (handleMessage == null) {
                 handleMessage = inlineQuery != null ? inlineQuery.getQuery() : null;
             }
+//            else if(contractUser!=null){
+//                CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(),handleMessage);
+//                handleMessage = commandBuilder.getURI();
+//            }
 
-            if (message != null
-                    && handleMessage != null
-                    && !handleMessage.isEmpty()
-                    && chatId != null
-                    && fromUser != null) {
-
-                switch (handleMessage) {
-                    case "/start": {
-                        messageId = null;
-                        model.setMessageId(fromUser.getId(), messageId);
-                        contractUser.setMessageId(messageId);
-                        contractUser.setState("/");
-                        break;
-                    }
-                    case "/help": {
-                        Analytics.getInstance().getMakeLabs_bot().sendMessage("Введите /start чтобы вызвать меню",
-                                chatId, fromUser);
-                        break;
-                    }
-                    default:
-                }
-            }
         }
 
         setChanged();
@@ -126,7 +110,8 @@ public class ViewModel extends Observable {
         if (usr == null) {
             usr = new ContractUser(fromUser.getId(),
                     username, firstname);
-            model.setUser(fromUser.getId(), usr);
+//            usr.setState("/");
+            model.setUser(usr);
         }
         return usr;
     }
@@ -136,17 +121,11 @@ public class ViewModel extends Observable {
         return contractUser;
     }
 
-    public void setContractUser(ContractUser contractUser) {
-        this.contractUser = contractUser;
-    }
 
     public String getHandleMessage() {
         return handleMessage;
     }
 
-    public void setHandleMessage(String handleMessage) {
-        this.handleMessage = handleMessage;
-    }
 
     public Integer getMessageId() {
         return messageId;
@@ -159,40 +138,28 @@ public class ViewModel extends Observable {
         return model.getMessageId(uid);
     }
 
-    public void setMessageId(Integer messageId) {
-        this.messageId = messageId;
-    }
 
     public String getCallbackId() {
         return callbackId;
     }
 
-    public void setCallbackId(String callbackId) {
-        this.callbackId = callbackId;
-    }
 
     public String getInlineId() {
         return inlineId;
     }
 
-    public void setInlineId(String inlineId) {
-        this.inlineId = inlineId;
-    }
 
     public Long getChatId() {
         return chatId;
     }
 
-    public void setChatId(Long chatId) {
-        this.chatId = chatId;
-    }
 
     public User getFromUser() {
         return fromUser;
     }
 
-    public void setMessageIdForUser(Integer id, Integer mid) {
-        model.setMessageId(id, mid);
+    public void setMessageIdForUser(Integer uid, Integer mid) {
+        model.setMessageId(uid, mid);
     }
 
     public PostWorkData getWorkData(String state, User userRequested) {
@@ -201,5 +168,33 @@ public class ViewModel extends Observable {
 
     public void setWorkData(String state, PostWorkData workData) {
         model.setPostWorkData(state, workData);
+    }
+
+    public Integer initializeUserState() {
+        //commenting those three lines makes it force-update message id
+//        messageId = getMessageIdForUser(fromUser.getId());
+//        if (messageId == null || messageId == 0) {
+
+        Message message = Analytics.getInstance().getMakeLabs_bot().sendMessage(".", chatId
+                , null, fromUser);
+        if (message != null)
+            messageId = message.getMessageId();
+        else
+            Log.Info("Could not get message id for "
+                    + fromUser.getUserName()
+                    + "["
+                    + fromUser.getId()
+                    + "]");
+
+        setMessageIdForUser(fromUser.getId(), messageId);
+
+        handleMessage = "/";
+        contractUser.setState(handleMessage);
+//        }
+        return messageId;
+    }
+
+    public void setContractUserForId(ContractUser usr) {
+        model.setUser(usr);
     }
 }

@@ -19,14 +19,23 @@ public class RegularMessageHandler implements MessageHandler {
     @Override
     public void handle() {
         String answer = "";
-        if (gotMessage.toLowerCase().contains("пидор"))
+        String lowCaseMessage = gotMessage.toLowerCase();
+        if (lowCaseMessage.contains("пидор"))
             answer = "А может ты пидор?";
+        else if (lowCaseMessage.contains("что"))
+            answer = "Что ?";
+        else if (lowCaseMessage.contains("?"))
+            answer = "Слишком много вопросов\n";
+        else if (lowCaseMessage.contains("!"))
+            answer = "Кайф";
+        else if (lowCaseMessage.contains("слава украине") || lowCaseMessage.contains("слава україні"))
+            answer = "Героям слава";
         else
-            answer = "Echoing back - " + gotMessage + " to " + fromUser.getFirstName();
+            answer = "Извините, " + fromUser.getFirstName() + ", я понятия не имею что значит Ваше " + gotMessage;
 
         Log.Info(answer);
 
-        if (Analytics.getInstance().getMakeLabs_bot().sendMessage(answer, chatId, fromUser) != null)
+        if (Analytics.getInstance().getMakeLabs_bot().sendMessage(answer, chatId, null, fromUser) != null)
             Log.Info("Successfully sent", Log.VERBOSE);
         else
             Log.Info("There was an issue with sending message");
@@ -38,5 +47,17 @@ public class RegularMessageHandler implements MessageHandler {
                 && !gotMessage.isEmpty()
                 && fromUser != null
                 && chatId != null;
+    }
+
+    public String getGotMessage() {
+        return gotMessage;
+    }
+
+    public User getFromUser() {
+        return fromUser;
+    }
+
+    public Long getChatId() {
+        return chatId;
     }
 }

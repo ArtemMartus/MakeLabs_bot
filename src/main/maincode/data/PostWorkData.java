@@ -104,7 +104,8 @@ public class PostWorkData implements Serializable {
     }
 
     public boolean hasParams() {
-        return params != null && params.size() > 0;
+        return params != null
+                && params.size() > 0;
     }
 
     public boolean hasChild(String command) {
@@ -114,5 +115,15 @@ public class PostWorkData implements Serializable {
             if (pair.getFirst().equals(command))
                 return true;
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "PostWorkData{" +
+                "description='" + description + '\'' +
+                ", params=" + params +
+                ", fileName='" + fileName + '\'' +
+                ", isValid=" + isValid +
+                '}';
     }
 }

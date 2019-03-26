@@ -30,8 +30,10 @@ public class ContractUser implements Serializable {
         if (!setId(id)) {
             this.username = username;
             this.firstname = firstname;
-            state = "/";
         }
+        if (state == null
+                || state.isEmpty())
+            setState("/");
     }
 
 
@@ -88,8 +90,9 @@ public class ContractUser implements Serializable {
         return contracts != null && contracts.size() > 0;
     }
 
-    public void goBack() {
+    public String goBack() {
         state = remLast(state);
+        return state;
     }
 
     private boolean tryLoad() {
@@ -212,5 +215,17 @@ public class ContractUser implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ContractUser{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", firstname='" + firstname + '\'' +
+                ", contracts=" + contracts +
+                ", state='" + state + '\'' +
+                ", messageId=" + messageId +
+                '}';
     }
 }

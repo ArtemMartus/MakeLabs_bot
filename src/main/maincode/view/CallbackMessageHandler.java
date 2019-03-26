@@ -8,7 +8,8 @@ public class CallbackMessageHandler implements MessageHandler {
 
     private final String queryId;
     private final User toUser;
-    private final String caption;
+    private String caption;
+    private boolean alreadyRun = false;
 
     public CallbackMessageHandler(String queryId, String caption, User toUser) {
         this.queryId = queryId;
@@ -18,6 +19,9 @@ public class CallbackMessageHandler implements MessageHandler {
 
     @Override
     public void handle() {
+        if (alreadyRun)
+            return;
+
         Log.Info("Handling callbackQuery with caption " + caption);
 
 
@@ -25,6 +29,8 @@ public class CallbackMessageHandler implements MessageHandler {
             Log.Info("Callback query answered");
         else
             Log.Info("Callback query answer failed");
+
+        alreadyRun = true;
     }
 
     @Override
@@ -32,5 +38,13 @@ public class CallbackMessageHandler implements MessageHandler {
         return queryId != null
                 && !queryId.isEmpty()
                 && toUser != null;
+    }
+
+    public void setCaption(String caption) {
+        this.caption = caption;
+    }
+
+    public boolean isAlreadyRun() {
+        return alreadyRun;
     }
 }
