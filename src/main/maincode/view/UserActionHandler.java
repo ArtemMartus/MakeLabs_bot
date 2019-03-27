@@ -97,17 +97,13 @@ public class UserActionHandler implements MessageHandler {
                         "Telegram: @upsage");
                 return true;
             }
-            //TODO make contract store date of applying, boolean isPurchased, date of purchase, date start processing, date start reviewing, date give off to client
-            //TODO make more complex status handling with actual status plus actual status date
+
             //TODO make ability to choose whether the work should be made just to pass 60% with 0.75 price in 5 days or \n
             // made normally for regular price in 5 days or made finest quality in 5 days for double price\n
             // or made in 1 day with fines quality with 4 times price
-            //Possibly last one to-do should use new uri like /users_database/123_dir/123abc_dir/checkout  and be a copy of sampled layout with changed prices
 
             //TODO start planning Jobs bot
             //we can handle new jobs by asking employees for pdf task details and writing our own prices. It would be the safest way
-            //TODO make sales counting for each postWorkData
-            // TODO add payments
             case "Мои заказы": {
                 List<Contract> contractList = contractUser.getContracts();
                 if (contractList.size() > 0) {
@@ -133,10 +129,18 @@ public class UserActionHandler implements MessageHandler {
                 return true;
             }
             case "Подтвердить": {
-                Contract contract = contractUser.getUnAppliedContract();
-                contract.apply();
-                contract.writeTo(contractUser.getId() + "_dir/" + contract.getHash());
-                getHome();
+                {
+                    // TODO handle comment adding
+                    //Possibly can be done by making user's state equal to '/../users_database/$UID_dir/$CONTRACTID_dir/comment'
+
+                    // TODO add payments
+                    //Possibly should use new uri like /users_database/$UID_dir/$CONTRACTID_dir/checkout  and be a copy of sampled layout with changed prices
+
+                    Contract contract = contractUser.getUnAppliedContract();
+                    contract.apply();
+                    contract.writeTo(contractUser.getId() + "_dir/" + contract.getHash());
+                    getHome();
+                }
                 break; // has it be return true?
             }
             default: {

@@ -1,8 +1,10 @@
 package maincode.data;
 
 import maincode.helper.Log;
+import maincode.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 import org.json.JSONObject;
+import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,17 +17,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Contract implements Serializable {
+    //TODO make contract store date of applying, date of purchase, date start processing, date start reviewing, date give off to client
+
     public static final String FRESH_NEW = "Создан новый заказ, не подтверждён";
-    public static final String APPLIED = "Заказ подтверждён";
+    public static final String APPLIED = "Заказ подтверждён, не оплачен";
+    public static final String PURCHASED = "Заказ оплачен, в обработке";
+    public static final String PROCESSING = "Заказ принят, ожидайте конец конкурса";
+    public static final String REVIEWING = "Конкурсные работы рассматриваются, ожидайте";
+    public static final String GIVEOFF = "Ваш заказ выполнен!";
+
     private static final String base_uri = "./users_database/";
     private static Random random = new Random();
+    private static final Calendar calendar = Calendar.getInstance();
+
     private String name = "";
     private String additional = "";
     private String comment = "";
     private Integer price = 0;
-    private Boolean applied = false;
+
+    private Long unixDateOfApplying = -1L;
+    private Long unixDateOfPurchase = -1L;
+    private Long unixDateOfStartProcessing = -1L;
+    private Long unixDateOfStartReviewing = -1L;
+    private Long unixDateOfGiveOff = -1L;
+    private Long unixDateOfEndingContest = -1L;
     private String typeHash = "";
-    private String status = "";
+    private String status;
     private int id;
 
     public Contract() {
@@ -33,17 +50,22 @@ public class Contract implements Serializable {
         status = FRESH_NEW;
     }
 
-    public Contract(String name, String additional, String comment, Integer price, Boolean applied, int id, String status) {
-        //super();
+    public Contract(String name, String additional, String comment, Integer price, Long unixDateOfApplying,
+                    Long unixDateOfPurchase, Long unixDateOfStartProcessing, Long unixDateOfStartReviewing,
+                    Long unixDateOfGiveOff, Long hoursOfContest, String status, int id) {
         setName(name);
         this.additional = additional;
         this.comment = comment;
         this.price = price;
-        this.applied = applied;
-        this.id = id;
+        this.unixDateOfApplying = unixDateOfApplying;
+        this.unixDateOfPurchase = unixDateOfPurchase;
+        this.unixDateOfStartProcessing = unixDateOfStartProcessing;
+        this.unixDateOfStartReviewing = unixDateOfStartReviewing;
+        this.unixDateOfGiveOff = unixDateOfGiveOff;
+        this.unixDateOfEndingContest = hoursOfContest;
         this.status = status;
+        this.id = id;
     }
-
 
     public static int generateRandomId() {
         int i = random.nextInt();
@@ -52,8 +74,19 @@ public class Contract implements Serializable {
     }
 
     public boolean isFreshNew() {
-        return name.isEmpty() && additional.isEmpty() && price == 0 && !applied && comment.isEmpty();
+        return name.isEmpty()
+                && additional.isEmpty()
+                && price == 0
+                && unixDateOfApplying < 0
+                && unixDateOfPurchase < 0
+                && unixDateOfStartProcessing < 0
+                && unixDateOfStartReviewing < 0
+                && unixDateOfGiveOff < 0
+                && unixDateOfEndingContest < 0
+                && status.equals(FRESH_NEW)
+                && comment.isEmpty();
     }
+
 
     public void setUpAllIncluding(PostWorkData data) {
         String hash = Integer.toHexString(data.getDescription().hashCode());
@@ -63,7 +96,13 @@ public class Contract implements Serializable {
             this.additional = "";
             this.comment = "";
             this.price = 0;
-            this.applied = false;
+            unixDateOfApplying
+                    = unixDateOfPurchase
+                    = unixDateOfStartProcessing
+                    = unixDateOfStartReviewing
+                    = unixDateOfGiveOff
+                    = unixDateOfEndingContest
+                    = -1L;
             status = FRESH_NEW;
 
             for (Pair<String, Integer> pair : data.getParams()) {
@@ -100,14 +139,25 @@ public class Contract implements Serializable {
         return price;
     }
 
-    public void apply() {
-        applied = true;
-        status = APPLIED;
+    private Long unixNow() {
+        return calendar.getTimeInMillis() / 1000L;
     }
 
-    public Boolean getApplied() {
-        return applied;
+    private void setStatus(String status, PostWorkData data) {
+        this.status = status;
+        Analytics.getInstance().updatePostWorkDataStatus(data, status + " for price " + price);
     }
+
+    public void apply(PostWorkData data) {
+        unixDateOfApplying = unixNow();
+        setStatus(APPLIED, data);
+    }
+
+    public void paid(PostWorkData data) {
+        unixDateOfPurchase = unixNow();
+        setStatus(PURCHASED, data);
+    }
+
 
     public int getId() {
         return id;
@@ -124,11 +174,6 @@ public class Contract implements Serializable {
         if (!(o instanceof Contract)) return false;
         Contract contract = (Contract) o;
         return typeHash.equals(contract.typeHash);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getName(), getAdditional(), getPrice(), getApplied(), getTypeHash(), getId());
     }
 
     public String getHash() {
@@ -184,7 +229,14 @@ public class Contract implements Serializable {
             additional = object.getString("additional");
             comment = object.getString("comment");
             price = object.getInt("price");
-            applied = object.getBoolean("applied");
+
+            unixDateOfApplying = object.getLong("unixDateOfApplying");
+            unixDateOfStartProcessing = object.getLong("unixDateOfStartProcessing");
+            unixDateOfPurchase = object.getLong("unixDateOfPurchase");
+            unixDateOfStartReviewing = object.getLong("unixDateOfStartReviewing");
+            unixDateOfGiveOff = object.getLong("unixDateOfGiveOff");
+            unixDateOfEndingContest = object.getLong("unixDateOfEndingContest");
+
             typeHash = object.getString("typeHash");
             status = object.getString("status");
             id = object.getInt("id");
@@ -207,7 +259,15 @@ public class Contract implements Serializable {
         dataset.put("additional", additional);
         dataset.put("comment", comment);
         dataset.put("price", price);
-        dataset.put("applied", applied);
+
+        dataset.put("unixDateOfApplying", unixDateOfApplying);
+        dataset.put("unixDateOfEndingContest", unixDateOfEndingContest);
+        dataset.put("unixDateOfStartProcessing", unixDateOfStartProcessing);
+        dataset.put("unixDateOfPurchase", unixDateOfPurchase);
+        dataset.put("unixDateOfStartReviewing", unixDateOfStartReviewing);
+        dataset.put("unixDateOfGiveOff", unixDateOfGiveOff);
+
+
         dataset.put("typeHash", typeHash);
         dataset.put("status", status);
 
@@ -215,16 +275,22 @@ public class Contract implements Serializable {
 
         String filename = base_uri + destinationPath;
 
-        Path path = Paths.get(filename);
+
 
         Log.Info("Generating form " + filename + " " + object.toString(), Log.VERBOSE);
 
 
-        File file = new File(path.getParent().toString());
-        file.mkdirs();
+        Path path = Paths.get(filename);
+        File file = new File(path.getParent().toUri());
+
 
         try {
-            Files.write(path, object.toString().getBytes());
+            if (file.mkdirs()
+                    || (file.exists()
+                    && file.isDirectory()))
+                Files.write(path, object.toString().getBytes());
+            else
+                System.err.println("Cannot access " + file.getAbsolutePath() + " directory");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -277,6 +343,41 @@ public class Contract implements Serializable {
                 .append("\n")
                 .append("Статус = ")
                 .append(status);
+        switch (status) {//TODO make more complex status handling with actual status plus actual status date
+            //Done?
+            case APPLIED: {
+                builder
+                        .append("\nЗаказ принят ")
+                        .append(Analytics.getTime(unixDateOfApplying));
+                break;
+            }
+            case PURCHASED: {
+                builder
+                        .append("\nЗаказ оплачен ")
+                        .append(Analytics.getTime(unixDateOfPurchase));
+                break;
+            }
+            case PROCESSING: {
+                builder
+                        .append("\nКонкурс начат ")
+                        .append(Analytics.getTime(unixDateOfStartProcessing))
+                        .append("\nКонец конкурса ")
+                        .append(Analytics.getTime(unixDateOfEndingContest));
+                break;
+            }
+            case REVIEWING: {
+                builder
+                        .append("\nВыбор лучшей работы ")
+                        .append(Analytics.getTime(unixDateOfStartReviewing));
+                break;
+            }
+            case GIVEOFF: {
+                builder
+                        .append("\nРабота сдана ")
+                        .append(Analytics.getTime(unixDateOfGiveOff));
+                break;
+            }
+        }
         return builder.toString();
     }
 }

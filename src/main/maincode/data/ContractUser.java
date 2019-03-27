@@ -118,7 +118,7 @@ public class ContractUser implements Serializable {
             else
                 messageId = null;
 
-            if (object.has("contracts")) {
+            /*if (object.has("contracts")) { // we should not save\load contracts from ContractUser json
                 JSONArray jsonArray = object.getJSONArray("contracts");
                 for (int i = 0; i < jsonArray.length(); ++i) {
 
@@ -143,7 +143,7 @@ public class ContractUser implements Serializable {
                     }
 
                 }
-            }
+            }*/
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
@@ -152,10 +152,10 @@ public class ContractUser implements Serializable {
         Log.Info(fileName + " is valid ContractUser JSON");
 
         File file = new File(fileName + "_dir");
-        if (file.exists()) {
+        if (file.exists() && file.isDirectory()) {
             File[] contents = file.listFiles();
             if (contents != null && contents.length > 0) {
-                Log.Info("Found " + contents.length + " applied contracts in " + file.getPath());
+                Log.Info("Found " + contents.length + " contracts in " + file.getPath());
                 for (File testContract : contents) {
                     if (testContract.isFile()) {
                         Contract contract = new Contract();
@@ -179,9 +179,9 @@ public class ContractUser implements Serializable {
 
     public Contract getUnAppliedContract() {
         if (hasContracts()) {
-            for (Contract contract : contracts)
-                if (!contract.getApplied())
-                    return contract;
+            for (Contract item : contracts)
+                if (!item.isFreshNew())
+                    return item;
         }
         Contract contract = new Contract();
         contracts.add(contract);
@@ -193,10 +193,10 @@ public class ContractUser implements Serializable {
         dataset.put("id", id);
         dataset.put("username", username);
         dataset.put("firstname", firstname);
-        dataset.put("contracts", contracts);
-        if (hasContracts()) {
-            Log.Info("Saving contracts into json", Log.VERBOSE);
-        }
+//        dataset.put("contracts", contracts);//should not save contracts into ContractUser json
+//        if (hasContracts()) {
+//            Log.Info("Saving contracts into json", Log.VERBOSE);
+//        }
         dataset.put("state", state);
         dataset.put("messageId", messageId);
 
@@ -204,17 +204,25 @@ public class ContractUser implements Serializable {
 
         String fileName = base_uri + id;
 
-        Log.Info("Generating form " + fileName + " " + object.toString(), Log.EVERYTHING);
+        //start
+        Log.Info("Generating contract user " + fileName + " " + object.toString(), Log.EVERYTHING);
 
         Path path = Paths.get(fileName);
         File file = new File(path.getParent().toUri());
-        file.mkdirs();
+
 
         try {
-            Files.write(path, object.toString().getBytes());
+            if (file.mkdirs()
+                    || (file.exists()
+                    && file.isDirectory()))
+                Files.write(path, object.toString().getBytes());
+            else
+                System.err.println("Cannot get access " + file.getAbsolutePath() + " directory");
+            // TODO remove same code in contract writeTo
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //end
     }
 
     @Override

@@ -10,12 +10,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PostWorkController {
 
     private static final String base_path = "./post_work";
+    private static final String samples_path = "./samples";
+
     private static boolean loaded = false;
+    private static boolean loadedSamples = false;
     private static HashMap<String, PostWorkData> workMap = new HashMap<>();
+    private static HashMap<String, PostWorkData> samplesMap = new HashMap<>();
 
     public static String internPath(String path) {
         int indexOfBase = path.indexOf(base_path);
@@ -30,7 +35,7 @@ public class PostWorkController {
             return ret;
     }
 
-    private static void loadDirectory(File dirFile) {
+    private static void loadDirectory(File dirFile, Map<String, PostWorkData> workMap) {
         Log.Info("Loading " + dirFile.getPath() + " directory");
 
         File[] contents = dirFile.listFiles();
@@ -42,7 +47,7 @@ public class PostWorkController {
         boolean hasDescriptor = false;
         for (File f : contents) {
             if (f.isDirectory()) {
-                loadDirectory(f);
+                loadDirectory(f, workMap);
             } else if (!hasDescriptor) {
                 try {
                     PostWorkData workData = new PostWorkData(f.getAbsolutePath());
@@ -72,21 +77,39 @@ public class PostWorkController {
         }
     }
 
-    public static void loadWork() {
-        File dataDirectory = new File(base_path);
+    private static void load(String path, Map<String, PostWorkData> map) {
+        File dataDirectory = new File(path);
         if (dataDirectory.mkdir())
-            Log.Info(base_path + " directory created");
+            Log.Info(path + " directory created");
         File[] contents = dataDirectory.listFiles();
         if (contents == null || contents.length == 0) {
-            Log.Info(base_path + " directory is empty. Fill it");
+            Log.Info(path + " directory is empty. Fill it");
         } else
-            loadDirectory(dataDirectory);
+            loadDirectory(dataDirectory, map);
+    }
+
+    public static void loadWork() {
+        load(base_path, workMap);
 
         loaded = true;
         Log.Info("PostWorkController initialized");
 
         PostWorkData make = getData("/Сделать заказ");
         updateData(make);
+    }
+
+    public static void loadSample() {
+        load(samples_path, samplesMap);
+
+        loadedSamples = true;
+        Log.Info("PostWorkController samples initialized");
+
+        //TODO write methods for loading samples
+        //  We will use samples for /comment and /checkout
+
+        //TODO for (/Мои заказы) each message give a inline keyboard for 'pay','cancel','change price'
+        //  it may follow /samples/myorder sample with buttons and description being added during generation process
+
     }
 
     private static PostWorkData updateData(PostWorkData data) {
@@ -122,6 +145,7 @@ public class PostWorkController {
             data = updateData(data);
         return data;
     }
+
 
     public static List<PostWorkData> getChildren(String uri) {
         if (!loaded)
