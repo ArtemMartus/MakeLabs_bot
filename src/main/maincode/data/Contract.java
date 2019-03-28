@@ -4,7 +4,6 @@ import maincode.helper.Log;
 import maincode.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 import org.json.JSONObject;
-import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +20,7 @@ public class Contract implements Serializable {
 
     public static final String FRESH_NEW = "Создан новый заказ, не подтверждён";
     public static final String APPLIED = "Заказ подтверждён, не оплачен";
+    public static final String CANCELED = "Заказ отменён";
     public static final String PURCHASED = "Заказ оплачен, в обработке";
     public static final String PROCESSING = "Заказ принят, ожидайте конец конкурса";
     public static final String REVIEWING = "Конкурсные работы рассматриваются, ожидайте";
@@ -41,6 +41,7 @@ public class Contract implements Serializable {
     private Long unixDateOfStartReviewing = -1L;
     private Long unixDateOfGiveOff = -1L;
     private Long unixDateOfEndingContest = -1L;
+    private Long unixDateOfCanceling = -1L;
     private String typeHash = "";
     private String status;
     private int id;
@@ -52,7 +53,7 @@ public class Contract implements Serializable {
 
     public Contract(String name, String additional, String comment, Integer price, Long unixDateOfApplying,
                     Long unixDateOfPurchase, Long unixDateOfStartProcessing, Long unixDateOfStartReviewing,
-                    Long unixDateOfGiveOff, Long hoursOfContest, String status, int id) {
+                    Long unixDateOfGiveOff, Long hoursOfContest, Long unixDateOfCanceling, String status, int id) {
         setName(name);
         this.additional = additional;
         this.comment = comment;
@@ -65,6 +66,7 @@ public class Contract implements Serializable {
         this.unixDateOfEndingContest = hoursOfContest;
         this.status = status;
         this.id = id;
+        this.unixDateOfCanceling = unixDateOfCanceling;
     }
 
     public static int generateRandomId() {
@@ -83,6 +85,7 @@ public class Contract implements Serializable {
                 && unixDateOfStartReviewing < 0
                 && unixDateOfGiveOff < 0
                 && unixDateOfEndingContest < 0
+                && unixDateOfCanceling < 0
                 && status.equals(FRESH_NEW)
                 && comment.isEmpty();
     }
@@ -102,6 +105,7 @@ public class Contract implements Serializable {
                     = unixDateOfStartReviewing
                     = unixDateOfGiveOff
                     = unixDateOfEndingContest
+                    = unixDateOfCanceling
                     = -1L;
             status = FRESH_NEW;
 
@@ -156,6 +160,25 @@ public class Contract implements Serializable {
     public void paid(PostWorkData data) {
         unixDateOfPurchase = unixNow();
         setStatus(PURCHASED, data);
+    }
+
+    public void calcel(PostWorkData data) {
+        unixDateOfCanceling = unixNow();
+        setStatus(CANCELED, data);
+    }
+
+    public void process(PostWorkData data) {
+        unixDateOfStartProcessing = unixNow();
+        setStatus(PROCESSING, data);
+    }
+
+    public void endContest(PostWorkData data) {
+        unixDateOfEndingContest = unixNow();
+    }
+
+    public void review(PostWorkData data) {
+        unixDateOfStartReviewing = unixNow();
+        setStatus(REVIEWING, data);
     }
 
 

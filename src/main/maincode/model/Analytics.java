@@ -49,10 +49,13 @@ public class Analytics {
         return df.format(today);
     }
 
-    public void checkTime() {
+    public synchronized void checkTime() {
+        final int second = 1;
+        final int minute = second * 60;
+
         Long current = Calendar.getInstance().getTimeInMillis() / 1000L;
         //System.out.println("Check time \n\t"+current+"\n\t"+lastunixtime);
-        if (current - lastunixtime > 60) {
+        if (current - lastunixtime > minute * 15) {
             saveCurrent(current);
         }
     }
@@ -69,14 +72,12 @@ public class Analytics {
         lastKey = lastKey == null ? 1 : ++lastKey;
         map.put(toUser, lastKey);
 
-        checkTime();
-
         return lastKey;
     }
 
     public void saveCurrent(Long unixtimestamp) {
         Log.Info("\n", Log.ANALYTICS);
-        Log.Info("[Stats] From  ["
+        Log.Info("From  ["
                 + getTime(lastunixtime)
                 + "] -->(till)--> ["
                 + getTime(unixtimestamp)
@@ -190,7 +191,6 @@ public class Analytics {
 
     public void updatePostWorkDataRequested(PostWorkData postWorkData, User userRequested) {
         if (postWorkData == null) return;
-        checkTime();
         Map<User, Integer> dataPairRequested = postWorkDataRequested.get(postWorkData);
         if (dataPairRequested == null) {
             dataPairRequested = new HashMap<>();
@@ -222,7 +222,6 @@ public class Analytics {
 
     public void updatePostWorkDataStatus(PostWorkData data, String statusPlusPrice) {
         if (data == null) return;
-        checkTime();
         Integer times = 1;
         Map<String, Integer> dataPairRequested = postWorkDataStatus.get(data);
         if (dataPairRequested == null) {

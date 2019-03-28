@@ -22,20 +22,22 @@ public class PostWorkController {
     private static HashMap<String, PostWorkData> workMap = new HashMap<>();
     private static HashMap<String, PostWorkData> samplesMap = new HashMap<>();
 
-    public static String internPath(String path) {
-        int indexOfBase = path.indexOf(base_path);
+    public static String internPath(String path, boolean sample) {
+        String look_path = sample ? samples_path : base_path;
+
+        int indexOfBase = path.indexOf(look_path);
         String ret;
         if (indexOfBase != -1)
-            ret = path.substring(indexOfBase + base_path.length());
+            ret = path.substring(indexOfBase + look_path.length());
         else
-            ret = path.substring(base_path.length());
+            ret = path.substring(look_path.length());
         if (ret.isEmpty())
             return "/".concat(ret);
         else
             return ret;
     }
 
-    private static void loadDirectory(File dirFile, Map<String, PostWorkData> workMap) {
+    private static void loadDirectory(File dirFile, Map<String, PostWorkData> map, boolean sample) {
         Log.Info("Loading " + dirFile.getPath() + " directory");
 
         File[] contents = dirFile.listFiles();
@@ -47,7 +49,7 @@ public class PostWorkController {
         boolean hasDescriptor = false;
         for (File f : contents) {
             if (f.isDirectory()) {
-                loadDirectory(f, workMap);
+                loadDirectory(f, map, sample);
             } else if (!hasDescriptor) {
                 try {
                     PostWorkData workData = new PostWorkData(f.getAbsolutePath());
@@ -56,10 +58,10 @@ public class PostWorkController {
                         continue;
                     }
 
-                    String iURI = internPath(dirFile.getPath());
-                    PostWorkData duplicateCheck = workMap.get(iURI);
+                    String iURI = internPath(dirFile.getPath(), sample);
+                    PostWorkData duplicateCheck = map.get(iURI);
                     if (duplicateCheck == null) {
-                        workMap.put(iURI, workData);
+                        map.put(iURI, workData);
                         Log.Info("Added to work map");
                         hasDescriptor = true;
                     } else
@@ -77,7 +79,12 @@ public class PostWorkController {
         }
     }
 
-    private static void load(String path, Map<String, PostWorkData> map) {
+
+    public static void loadWork(boolean sample) {
+
+        String path = sample ? samples_path : base_path;
+        Map<String, PostWorkData> map = sample ? samplesMap : workMap;
+
         File dataDirectory = new File(path);
         if (dataDirectory.mkdir())
             Log.Info(path + " directory created");
@@ -85,38 +92,30 @@ public class PostWorkController {
         if (contents == null || contents.length == 0) {
             Log.Info(path + " directory is empty. Fill it");
         } else
-            loadDirectory(dataDirectory, map);
-    }
-
-    public static void loadWork() {
-        load(base_path, workMap);
-
-        loaded = true;
-        Log.Info("PostWorkController initialized");
-
-        PostWorkData make = getData("/Сделать заказ");
-        updateData(make);
-    }
-
-    public static void loadSample() {
-        load(samples_path, samplesMap);
-
-        loadedSamples = true;
-        Log.Info("PostWorkController samples initialized");
+            loadDirectory(dataDirectory, map, sample);
 
         //TODO write methods for loading samples
-        //  We will use samples for /comment and /checkout
+        //  We will use samples for /mycontract and /checkout
 
         //TODO for (/Мои заказы) each message give a inline keyboard for 'pay','cancel','change price'
         //  it may follow /samples/myorder sample with buttons and description being added during generation process
+        if (!sample) {
+            loaded = true;
+            Log.Info("PostWorkController initialized");
 
+            PostWorkData make = getData("/Сделать заказ", false);
+            updateData(make, false);
+        } else
+            loadedSamples = true;
     }
 
-    private static PostWorkData updateData(PostWorkData data) {
-        if (!loaded)
-            loadWork();
 
-        List<PostWorkData> make_children = getChildren(data.getIURI());
+    private static PostWorkData updateData(PostWorkData data, boolean sample) {
+        if ((sample && !loadedSamples)
+                || (!sample && !loaded))
+            loadWork(sample);
+
+        List<PostWorkData> make_children = getChildren(data.getIURI(), sample);
         List<Pair<String, Integer>> make_buttons = data.getParams();
         if (make_buttons.size() < make_children.size() + 1) {
             Log.Info("Updating " + data.getIURI() + " params...");
@@ -130,26 +129,29 @@ public class PostWorkController {
         return data;
     }
 
-    public static boolean pathExists(String uri) {
-        if (!loaded)
-            loadWork();
+    public static boolean pathExists(String uri, boolean sample) {
+        if ((sample && !loadedSamples)
+                || (!sample && !loaded))
+            loadWork(sample);
         return workMap.containsKey(uri);
     }
 
-    public static PostWorkData getData(String uri) {
-        if (!loaded)
-            loadWork();
+    public static PostWorkData getData(String uri, boolean sample) {
+        if ((sample && !loadedSamples)
+                || (!sample && !loaded))
+            loadWork(sample);
 
         PostWorkData data = workMap.get(uri);
         if (data != null)
-            data = updateData(data);
+            data = updateData(data, sample);
         return data;
     }
 
 
-    public static List<PostWorkData> getChildren(String uri) {
-        if (!loaded)
-            loadWork();
+    public static List<PostWorkData> getChildren(String uri, boolean sample) {
+        if ((sample && !loadedSamples)
+                || (!sample && !loaded))
+            loadWork(sample);
 
         List<PostWorkData> children = new ArrayList<>();
         File dir = new File(base_path + uri);
@@ -157,7 +159,7 @@ public class PostWorkController {
         if (files != null)
             for (File file : files) {
                 if (file.isDirectory()) {
-                    String iURI = internPath(file.getPath());
+                    String iURI = internPath(file.getPath(), sample);
                     PostWorkData possibleChild = workMap.get(iURI);
                     if (possibleChild != null)
                         children.add(possibleChild);
@@ -177,8 +179,12 @@ public class PostWorkController {
         return base_path;
     }
 
+    public static String getSamples_path() {
+        return samples_path;
+    }
+
     public static final String remLast(String str) {
-        if (str.length() == 1 || str.indexOf("/") == -1)
+        if (str.length() == 1 || !str.contains("/"))
             return str;
         int slash = str.lastIndexOf("/");
         if (slash == 0)
@@ -186,14 +192,15 @@ public class PostWorkController {
         return str.substring(0, slash);
     }
 
-    public static String validifyPath(String string) {
-        if (!loaded)
-            loadWork();
+    public static String validifyPath(String string, boolean sample) {
+        if ((sample && !loadedSamples)
+                || (!sample && !loaded))
+            loadWork(sample);
 
         Path path = Paths.get(string);
-        if (pathExists(string))
+        if (pathExists(string, sample))
             return string;
-        if (pathExists(path.getParent().toString()))
+        if (pathExists(path.getParent().toString(), sample))
             return path.getParent().toString();
         Log.Info("validifyPath returns home '/'. Couldn't find " + string);
         return "/";

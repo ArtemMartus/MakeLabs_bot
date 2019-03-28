@@ -6,12 +6,13 @@ import org.telegram.telegrambots.meta.api.objects.User;
 
 public class RegularMessageHandler implements MessageHandler {
 
-    private final String gotMessage;
+    private final CommandBuilder commandBuilder;
     private final User fromUser;
     private final Long chatId;
+    private boolean goHome = false;
 
-    public RegularMessageHandler(String gotMessage, User fromUser, Long chatId) {
-        this.gotMessage = gotMessage;
+    public RegularMessageHandler(CommandBuilder commandBuilder, User fromUser, Long chatId) {
+        this.commandBuilder = commandBuilder;
         this.fromUser = fromUser;
         this.chatId = chatId;
     }
@@ -19,7 +20,7 @@ public class RegularMessageHandler implements MessageHandler {
     @Override
     public void handle() {
         String answer = "";
-        String lowCaseMessage = gotMessage.toLowerCase();
+        String lowCaseMessage = commandBuilder.getCommand().toLowerCase();
         if (lowCaseMessage.contains("пидор"))
             answer = "А может ты пидор?";
         else if (lowCaseMessage.contains("что"))
@@ -30,8 +31,13 @@ public class RegularMessageHandler implements MessageHandler {
             answer = "Кайф";
         else if (lowCaseMessage.contains("слава украине") || lowCaseMessage.contains("слава україні"))
             answer = "Героям слава";
-        else
-            answer = "Извините, " + fromUser.getFirstName() + ", я понятия не имею что значит Ваше " + gotMessage;
+        else {
+            answer = "Извините, "
+                    + fromUser.getFirstName()
+                    + ", я понятия не имею что значит Ваше "
+                    + commandBuilder.getCommand();
+            goHome = true;
+        }
 
         Log.Info(answer);
 
@@ -43,14 +49,14 @@ public class RegularMessageHandler implements MessageHandler {
 
     @Override
     public boolean isValid() {
-        return gotMessage != null
-                && !gotMessage.isEmpty()
+        return commandBuilder != null
+                && commandBuilder.isValid()
                 && fromUser != null
                 && chatId != null;
     }
 
-    public String getGotMessage() {
-        return gotMessage;
+    public CommandBuilder getCommandBuilder() {
+        return commandBuilder;
     }
 
     public User getFromUser() {
@@ -59,5 +65,9 @@ public class RegularMessageHandler implements MessageHandler {
 
     public Long getChatId() {
         return chatId;
+    }
+
+    public boolean goHome() {
+        return goHome;
     }
 }

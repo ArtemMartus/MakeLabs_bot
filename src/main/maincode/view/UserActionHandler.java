@@ -30,22 +30,24 @@ public class UserActionHandler implements MessageHandler {
 
     public UserActionHandler(RegularMessageHandler messageHandler, CallbackMessageHandler callbackMessageHandler,
                              ContractUser contractUser, InlineKeyboardManager keyboard,
-                             Integer messageId, CommandBuilder commandBuilder, ViewModel viewModel) {
+                             Integer messageId, ViewModel viewModel) {
         this.messageHandler = messageHandler;
         this.callbackMessageHandler = callbackMessageHandler;
         this.contractUser = contractUser;
         this.keyboard = keyboard;
         this.messageId = messageId;
-        this.commandBuilder = commandBuilder;
+
 
         if (messageHandler.isValid()) {
-            this.message = messageHandler.getGotMessage();
+            this.commandBuilder = messageHandler.getCommandBuilder();
+            this.message = commandBuilder.getCommand();
             this.fromUser = messageHandler.getFromUser();
             this.chatId = messageHandler.getChatId();
         } else {
             this.message = null;
             this.fromUser = null;
             this.chatId = null;
+            this.commandBuilder = null;
         }
 
         if (keyboard.isValid()) {
@@ -137,9 +139,20 @@ public class UserActionHandler implements MessageHandler {
                     //Possibly should use new uri like /users_database/$UID_dir/$CONTRACTID_dir/checkout  and be a copy of sampled layout with changed prices
 
                     Contract contract = contractUser.getUnAppliedContract();
-                    contract.apply();
-                    contract.writeTo(contractUser.getId() + "_dir/" + contract.getHash());
-                    getHome();
+                    if (contract.getComment().isEmpty()) {
+                        contractUser.setWaitingForComment(true);
+                        Send("Введите комментарий к заказу ( к примеру вариант задания )");
+                        return true;
+                    } else {
+
+                        // So, we finally have comment following order - show check out page and set status to applied
+                        // Then ask for payment and check when payed
+                        // TODO create a background service for checking analytics time and payments made
+                        contract.apply(workData);
+                        contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
+                        Send(contract.toString());
+                        getHome(); // TODO go checkout instead of home
+                    }
                 }
                 break; // has it be return true?
             }
@@ -189,7 +202,7 @@ public class UserActionHandler implements MessageHandler {
             workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
             if (workData == null) {
                 Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
-                workData = PostWorkController.getData(commandBuilder.getValidURI());
+                workData = PostWorkController.getData(commandBuilder.getValidURI(), false);
                 viewModel.setWorkData(commandBuilder.getValidURI(), workData);
             }
             if (workData == null) {
@@ -208,7 +221,7 @@ public class UserActionHandler implements MessageHandler {
                 if (!str.equals("/"))
                     str += "/";
                 str += pair.getFirst();
-                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str)) {
+                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) {
                     is_not_endpoint = false;
                     break;
                 }
@@ -258,8 +271,12 @@ public class UserActionHandler implements MessageHandler {
             callbackMessageHandler.handle();
 
         if (!handled
-                && messageHandler.isValid())
+                && messageHandler.isValid()) {
             messageHandler.handle();
+            if (messageHandler.goHome())
+                getHome();
+        }
+
         handled = true;
     }
 

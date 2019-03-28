@@ -24,9 +24,11 @@ public class ViewModel extends Observable {
     private String inlineId;
     private Long chatId;
     private User fromUser;
+    private final BackgroundService backgroundService;
 
     public ViewModel(Model model) {
         this.model = model;
+        backgroundService = new BackgroundService();
         Log.Info("ViewModel initialized");
     }
 
@@ -85,6 +87,14 @@ public class ViewModel extends Observable {
 //                CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(),handleMessage);
 //                handleMessage = commandBuilder.getURI();
 //            }
+
+            if (message != null
+                    && message.hasText()
+                    && contractUser.getWaitingForComment()) {
+                handleMessage = "Подтвердить";
+                contractUser.setComment(handleMessage);
+                contractUser.setWaitingForComment(false);
+            }
 
         }
 

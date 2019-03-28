@@ -47,15 +47,16 @@ public class View implements Observer {
 
             CallbackMessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId,
                     "new message", fromUser);
-            RegularMessageHandler regularMessageHandler = new RegularMessageHandler(gotMessage, fromUser, chatId);
 
             CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(), gotMessage);
+            RegularMessageHandler regularMessageHandler = new RegularMessageHandler(commandBuilder, fromUser, chatId);
+
             String getUri = commandBuilder.getValidURI();
 
             PostWorkData workData = viewModel.getWorkData(getUri, fromUser);
             if (workData == null) {
 
-                workData = PostWorkController.getData(getUri);
+                workData = PostWorkController.getData(getUri, false);
                 viewModel.setWorkData(getUri, workData);
                 Log.Info("Loaded " + getUri + " work data for " + fromUser.getUserName());
             }
@@ -64,7 +65,7 @@ public class View implements Observer {
 
             UserActionHandler actionHandler = new UserActionHandler(regularMessageHandler,
                     callbackMessageHandler, contractUser,
-                    keyboardManager, messageId, commandBuilder, viewModel);
+                    keyboardManager, messageId, viewModel);
 
             if (actionHandler.isValid())
                 actionHandler.handle();

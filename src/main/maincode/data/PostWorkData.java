@@ -99,7 +99,7 @@ public class PostWorkData implements Serializable {
 
     public String getIURI() {
         Path path = Paths.get(fileName).getParent();
-        String iURI = PostWorkController.internPath(path.toAbsolutePath().toString());
+        String iURI = PostWorkController.internPath(path.toAbsolutePath().toString(), false);
         return iURI;
     }
 

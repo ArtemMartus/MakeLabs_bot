@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Calendar;
 
 public class Log {
@@ -30,11 +31,17 @@ public class Log {
     public static void Info(String str, int level) {
         setLogStart();
         if (level == ANALYTICS) {
-            str = "[Stats]" + str;
+            if (str.length() > 2)
+                str = "[Stats]" + str;
             try {
                 File logsDir = new File("./logs");
-                if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory()))
-                    Files.write(Paths.get("./logs/" + logStart), str.getBytes());
+                if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory())) {
+                    String logFileName = "./logs/" + logStart;
+                    File logFile = new File(logFileName);
+                    logFile.createNewFile();
+                    String logFileData = str + "\n\r";
+                    Files.write(Paths.get(logFileName), logFileData.getBytes(), StandardOpenOption.APPEND);
+                }
                 else
                     System.err.println("Could not open " + logsDir.getAbsolutePath() + " directory.\nOmitting logging");
             } catch (IOException e) {

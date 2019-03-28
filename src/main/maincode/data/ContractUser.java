@@ -1,7 +1,6 @@
 package maincode.data;
 
 import maincode.helper.Log;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -13,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import static maincode.controllers.PostWorkController.remLast;
 
@@ -25,6 +23,7 @@ public class ContractUser implements Serializable {
     private List<Contract> contracts = new LinkedList<>();
     private String state;
     private Integer messageId;
+    private Boolean waitingForComment = false;
 
     public ContractUser(Integer id, String username, String firstname) {
         if (!setId(id)) {
@@ -93,6 +92,14 @@ public class ContractUser implements Serializable {
     public String goBack() {
         state = remLast(state);
         return state;
+    }
+
+    public Boolean getWaitingForComment() {
+        return waitingForComment;
+    }
+
+    public void setWaitingForComment(Boolean waitingForComment) {
+        this.waitingForComment = waitingForComment;
     }
 
     private boolean tryLoad() {
@@ -234,6 +241,13 @@ public class ContractUser implements Serializable {
                 ", contracts=" + contracts +
                 ", state='" + state + '\'' +
                 ", messageId=" + messageId +
+                ", waitingForComment=" + waitingForComment +
                 '}';
+    }
+
+    public void setComment(String handleMessage) {
+        Contract contract = getUnAppliedContract();
+        if (!contract.isFreshNew())
+            contract.setComment(handleMessage);
     }
 }

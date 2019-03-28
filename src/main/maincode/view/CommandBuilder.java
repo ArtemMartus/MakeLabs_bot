@@ -55,7 +55,7 @@ public class CommandBuilder implements MessageHandler {
             else if (!command.equals("/"))
                 uri += command;
 
-            validUri = PostWorkController.validifyPath(uri);
+            validUri = PostWorkController.validifyPath(uri, false);
 
             int lastSlash = uri.lastIndexOf("/");
             validCommand = uri.substring(lastSlash + 1);

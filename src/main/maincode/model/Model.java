@@ -23,7 +23,6 @@ public class Model {
     }
 
     public ContractUser getUser(Integer id) {
-        analytics.checkTime();
         return contractUserMap.get(id);
     }
 
@@ -31,20 +30,15 @@ public class Model {
         if (user == null)
             return;
         contractUserMap.put(user.getId(), user);
-        analytics.checkTime();
     }
 
     public Integer getMessageId(Integer uid) {
-        analytics.checkTime();
-
         return messageMap.get(uid);
     }
 
     public void setMessageId(Integer uid, Integer messageId) {
         if (uid != null)
             messageMap.put(uid, messageId);
-        analytics.checkTime();
-
     }
 
     public PostWorkData getPostWorkData(String uri, User userRequested) {
@@ -61,7 +55,6 @@ public class Model {
     public void saveContractUser(ContractUser contractUser) {
         contractUser.save();
         setUser(contractUser);
-        analytics.checkTime();
     }
 
 }
