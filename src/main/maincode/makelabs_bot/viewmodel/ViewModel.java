@@ -1,10 +1,10 @@
-package maincode.viewmodel;
+package main.maincode.makelabs_bot.viewmodel;
 
-import maincode.data.ContractUser;
-import maincode.data.PostWorkData;
-import maincode.helper.Log;
-import maincode.model.Analytics;
-import maincode.model.Model;
+import main.maincode.makelabs_bot.data.ContractUser;
+import main.maincode.makelabs_bot.data.PostWorkData;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.makelabs_bot.model.Analytics;
+import main.maincode.makelabs_bot.model.Model;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;

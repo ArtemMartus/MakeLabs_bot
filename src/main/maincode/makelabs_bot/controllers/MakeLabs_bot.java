@@ -1,10 +1,11 @@
-package maincode.controllers;
+package main.maincode.makelabs_bot.controllers;
 
-import maincode.helper.Log;
-import maincode.model.Analytics;
-import maincode.model.Model;
-import maincode.view.View;
-import maincode.viewmodel.ViewModel;
+import main.maincode.makelabs_bot.data.Contract;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.makelabs_bot.model.Analytics;
+import main.maincode.makelabs_bot.model.Model;
+import main.maincode.makelabs_bot.view.View;
+import main.maincode.makelabs_bot.viewmodel.ViewModel;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -16,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class MakeLabs_bot extends TelegramLongPollingBot {
 
@@ -109,6 +111,10 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
             //ex.printStackTrace();
         }
         return false;
+    }
+
+    public List<Contract> getAllContracts() {
+        return model.getAllOpenContracts();
     }
 
     @Override

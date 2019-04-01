@@ -1,11 +1,14 @@
-package maincode.model;
+package main.maincode.makelabs_bot.model;
 
-import maincode.data.ContractUser;
-import maincode.data.PostWorkData;
-import maincode.helper.Log;
+import main.maincode.makelabs_bot.data.Contract;
+import main.maincode.makelabs_bot.data.ContractUser;
+import main.maincode.makelabs_bot.data.PostWorkData;
+import main.maincode.makelabs_bot.helper.Log;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Model {
@@ -20,6 +23,13 @@ public class Model {
         dataset = new HashMap<>();
         analytics = Analytics.getInstance();
         Log.Info("Model initialized");
+    }
+
+    public synchronized List<Contract> getAllOpenContracts() {
+        List<Contract> contracts = new LinkedList<>();
+        for (ContractUser user : contractUserMap.values())
+            contracts.addAll(user.getContracts());
+        return contracts;
     }
 
     public ContractUser getUser(Integer id) {

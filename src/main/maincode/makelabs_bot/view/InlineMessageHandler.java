@@ -1,7 +1,7 @@
-package maincode.view;
+package main.maincode.makelabs_bot.view;
 
-import maincode.helper.Log;
-import maincode.model.Analytics;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.makelabs_bot.model.Analytics;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;

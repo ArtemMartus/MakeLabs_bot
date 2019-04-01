@@ -1,6 +1,6 @@
-package maincode.helper;
+package main.maincode.makelabs_bot.helper;
 
-import maincode.controllers.PostWorkController;
+import main.maincode.makelabs_bot.controllers.PostWorkController;
 import org.json.JSONObject;
 
 import java.io.File;

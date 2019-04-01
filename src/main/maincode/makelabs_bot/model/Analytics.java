@@ -1,8 +1,8 @@
-package maincode.model;
+package main.maincode.makelabs_bot.model;
 
-import maincode.controllers.MakeLabs_bot;
-import maincode.data.PostWorkData;
-import maincode.helper.Log;
+import main.maincode.makelabs_bot.controllers.MakeLabs_bot;
+import main.maincode.makelabs_bot.data.PostWorkData;
+import main.maincode.makelabs_bot.helper.Log;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.text.DateFormat;

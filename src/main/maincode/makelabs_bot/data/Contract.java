@@ -1,7 +1,7 @@
-package maincode.data;
+package main.maincode.makelabs_bot.data;
 
-import maincode.helper.Log;
-import maincode.model.Analytics;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.makelabs_bot.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 import org.json.JSONObject;
 

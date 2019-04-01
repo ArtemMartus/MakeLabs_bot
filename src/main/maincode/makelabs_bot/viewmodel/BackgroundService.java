@@ -1,6 +1,6 @@
-package maincode.viewmodel;
+package main.maincode.makelabs_bot.viewmodel;
 
-import maincode.model.Analytics;
+import main.maincode.makelabs_bot.model.Analytics;
 
 public class BackgroundService implements Runnable {
     private final Thread thread;

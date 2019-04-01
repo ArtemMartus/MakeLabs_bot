@@ -1,7 +1,7 @@
-package maincode.controllers;
+package main.maincode.makelabs_bot.controllers;
 
-import maincode.data.PostWorkData;
-import maincode.helper.Log;
+import main.maincode.makelabs_bot.data.PostWorkData;
+import main.maincode.makelabs_bot.helper.Log;
 import org.glassfish.grizzly.utils.Pair;
 
 import java.io.File;

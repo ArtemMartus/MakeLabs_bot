@@ -1,11 +1,11 @@
-package maincode.view;
+package main.maincode.makelabs_bot.view;
 
-import maincode.controllers.PostWorkController;
-import maincode.data.ContractUser;
-import maincode.data.PostWorkData;
-import maincode.helper.Log;
-import maincode.model.Analytics;
-import maincode.viewmodel.ViewModel;
+import main.maincode.makelabs_bot.controllers.PostWorkController;
+import main.maincode.makelabs_bot.data.ContractUser;
+import main.maincode.makelabs_bot.data.PostWorkData;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.makelabs_bot.model.Analytics;
+import main.maincode.makelabs_bot.viewmodel.ViewModel;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.Observable;

@@ -1,6 +1,6 @@
-package maincode.data;
+package main.maincode.makelabs_bot.data;
 
-import maincode.helper.Log;
+import main.maincode.makelabs_bot.helper.Log;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import static maincode.controllers.PostWorkController.remLast;
+import static main.maincode.makelabs_bot.controllers.PostWorkController.remLast;
 
 public class ContractUser implements Serializable {
     private static final String base_uri = "./users_database/";

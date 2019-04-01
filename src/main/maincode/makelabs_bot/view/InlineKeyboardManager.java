@@ -1,6 +1,6 @@
-package maincode.view;
+package main.maincode.makelabs_bot.view;
 
-import maincode.data.PostWorkData;
+import main.maincode.makelabs_bot.data.PostWorkData;
 import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;

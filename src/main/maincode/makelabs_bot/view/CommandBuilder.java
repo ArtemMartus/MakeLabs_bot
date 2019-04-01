@@ -1,6 +1,6 @@
-package maincode.view;
+package main.maincode.makelabs_bot.view;
 
-import maincode.controllers.PostWorkController;
+import main.maincode.makelabs_bot.controllers.PostWorkController;
 
 public class CommandBuilder implements MessageHandler {
     private String currentState;

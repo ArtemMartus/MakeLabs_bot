@@ -1,4 +1,4 @@
-package maincode.helper;
+package main.maincode.makelabs_bot.helper;
 
 import java.io.File;
 import java.io.IOException;

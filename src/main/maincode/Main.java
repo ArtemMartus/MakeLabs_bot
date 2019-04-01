@@ -1,21 +1,21 @@
-package maincode;
+package main.maincode;
 
-import maincode.controllers.MakeLabs_bot;
-import maincode.helper.Log;
+import io.github.cdimascio.dotenv.Dotenv;
+import main.maincode.makelabs_bot.controllers.MakeLabs_bot;
+import main.maincode.makelabs_bot.helper.Log;
+import main.maincode.manual_payment.SSLPaymentRestService;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
-
-import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
         Log.setShowLevel(Log.EVERYTHING);
+        SSLPaymentRestService service = new SSLPaymentRestService();
 
-        System.out.println("Before starting bot activity, enter token:");
-        Scanner scanner = new Scanner(System.in);
-        String token = scanner.nextLine();
+        Dotenv dotenv = Dotenv.load();
+        String token = dotenv.get("token");
 
         ApiContextInitializer.init();
         MakeLabs_bot bot = new MakeLabs_bot(token);
