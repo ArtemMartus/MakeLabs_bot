@@ -1,6 +1,7 @@
 package main.maincode.manual_payment;
 
 import com.sun.net.httpserver.*;
+import main.maincode.makelabs_bot.helper.Log;
 import main.maincode.makelabs_bot.model.Analytics;
 import org.json.JSONObject;
 
@@ -57,7 +58,7 @@ public class SSLPaymentRestService {
                         params.setSSLParameters(sslParameters);
 
                     } catch (Exception ex) {
-                        System.out.println("Failed to create HTTPS port");
+                        Log.Info("Failed to create HTTPS port", Log.PAYMENT_SERVICE);
                     }
                 }
             });
@@ -66,7 +67,7 @@ public class SSLPaymentRestService {
             httpsServer.start();
 
         } catch (Exception exception) {
-            System.out.println("Failed to create HTTPS server on port " + 1337 + " of localhost");
+            Log.Info("Failed to create HTTPS server on port " + 1337 + " of localhost", Log.PAYMENT_SERVICE);
             exception.printStackTrace();
 
         }
@@ -91,6 +92,7 @@ public class SSLPaymentRestService {
             Long hashToken = (Long) httpsExchange.getAttribute("hashToken");
             String username = (String) httpsExchange.getAttribute("username");
             String password = (String) httpsExchange.getAttribute("password");
+            String action = (String) httpsExchange.getAttribute("action");
 
             {
                 InputStreamReader isr = new InputStreamReader(httpsExchange.getRequestBody());
@@ -100,19 +102,21 @@ public class SSLPaymentRestService {
                     stringBuilder.append(reader.readLine());
                 requestBody = stringBuilder.toString();
             }
-            System.out.println(method);
-            System.out.println(requestBody);
+            Log.Info(method, Log.PAYMENT_SERVICE);
             if (requestBody.length() > 1) {
                 String[] args = requestBody.split("&");
                 for (String arg : args) {
                     String[] keyVal = arg.split("=");
                     if (keyVal.length != 2)
                         continue;
-                    System.out.println(keyVal[0] + " = " + keyVal[1]);
+                    Log.Info(keyVal[0] + " = " + keyVal[1], Log.PAYMENT_SERVICE);
                     if (keyVal[0].equals("username"))
                         username = keyVal[1];
                     if (keyVal[0].equals("password"))
                         password = keyVal[1];
+                    if (keyVal[0].equals("action"))
+                        action = keyVal[1];
+
                     if (keyVal[0].equals("session"))
                         try {
                             sessionId = Long.parseLong(keyVal[1]);
@@ -126,24 +130,34 @@ public class SSLPaymentRestService {
                             e.printStackTrace();
                         }
                 }
-            }
-            System.out.println("sessionId = " + sessionId + " username = " + username
-                    + " password = " + password + " hashToken = " + hashToken);
+            } else
+                Log.Info(requestBody, Log.PAYMENT_SERVICE);
+
+            String response = getResponse(method, hashToken, sessionId, username, password, action, requestBody);
 
 
-            String response = getResponse(method, hashToken, sessionId, username, password);
-
-
-            //t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             t.sendResponseHeaders(200, response.getBytes().length);
             OutputStream os = t.getResponseBody();
             os.write(response.getBytes());
             os.close();
         }
 
-        private String getResponse(String method, Long hashToken, Long sessionId, String username, String password) {
-            String new_uri;
+        private String getParam(String requestBody, String paramName) {
+            if (requestBody.length() > 1) {
+                String[] args = requestBody.split("&");
+                for (String arg : args) {
+                    String[] keyVal = arg.split("=");
+                    if (keyVal.length != 2)
+                        continue;
+                    if (keyVal[0].equals(paramName))
+                        return keyVal[1];
+                }
+            }
+            return null;
+        }
 
+        private String getResponse(String method, Long hashToken, Long sessionId, String username, String password
+                , String action, String requestBody) {
             JSONObject object = new JSONObject();
             Boolean ok = false;
             if (method.equals("GET")) {
@@ -157,8 +171,36 @@ public class SSLPaymentRestService {
                             if (service.adminClient.sessionId.equals(sessionId)) {
                                 if (service.adminClient.hashToken.equals(hashToken)) {
                                     ok = true;
-                                    object.put("contracts",
-                                            Analytics.getInstance().getMakeLabs_bot().getAllContracts());
+                                    if (action != null) {
+                                        switch (action) {
+                                            case "getContracts":
+                                                object.put("contracts",
+                                                        Analytics.getInstance().getMakeLabs_bot().getAllContracts());
+                                                Log.Info(object.toString(), Log.PAYMENT_SERVICE);
+                                                break;
+                                            case "setStatus":
+                                                String status = getParam(requestBody, "status");
+                                                String contract = getParam(requestBody, "contract");
+                                                if (status != null && contract != null) {
+                                                    Long contractId = null;
+                                                    try {
+                                                        contractId = Long.parseLong(contract);
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                        break;
+                                                    }
+                                                    switch (status) {
+                                                        case "paid":
+                                                            Analytics.getInstance().getMakeLabs_bot().setContractPaid(contractId);
+                                                            break;
+                                                        default:
+                                                    }
+                                                    ok = true;
+                                                }
+                                                break;
+                                            default:
+                                        }
+                                    }
                                 }
                             }
 

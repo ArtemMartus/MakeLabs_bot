@@ -131,4 +131,14 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
     public String getBotToken() {
         return token;
     }
+
+    public void setContractPaid(Long contractId) {
+        List<Contract> all = getAllContracts();
+        all.forEach((item) -> {
+            if (contractId.equals(item.getId())) {
+                item.paid();
+                return;
+            }
+        });
+    }
 }

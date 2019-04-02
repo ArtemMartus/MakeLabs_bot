@@ -34,6 +34,7 @@ public class Contract implements Serializable {
     private String additional = "";
     private String comment = "";
     private Integer price = 0;
+    private String dataURI = "";
 
     private Long unixDateOfApplying = -1L;
     private Long unixDateOfPurchase = -1L;
@@ -45,6 +46,7 @@ public class Contract implements Serializable {
     private String typeHash = "";
     private String status;
     private int id;
+    private long contractUser;
 
     public Contract() {
         id = generateRandomId();
@@ -144,46 +146,56 @@ public class Contract implements Serializable {
     }
 
     private Long unixNow() {
-        return calendar.getTimeInMillis() / 1000L;
+        return System.currentTimeMillis() / 1000L;
     }
 
-    private void setStatus(String status, PostWorkData data) {
+    private void setStatus(String status) {
         this.status = status;
-        Analytics.getInstance().updatePostWorkDataStatus(data, status + " for price " + price);
+        Analytics.getInstance().updatePostWorkDataStatus(dataURI, "<" + status + "> for price <" + price + ">");
     }
 
     public void apply(PostWorkData data) {
+        dataURI = data.getIURI();
         unixDateOfApplying = unixNow();
-        setStatus(APPLIED, data);
+        setStatus(APPLIED);
+        writeTo(contractUser + "_applied/" + getHash());
     }
 
-    public void paid(PostWorkData data) {
+    public void paid() {
+        try {
+            Files.delete(Paths.get(base_uri + contractUser + "_applied/" + getHash()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         unixDateOfPurchase = unixNow();
-        setStatus(PURCHASED, data);
+        setStatus(PURCHASED);
+
+        writeTo(contractUser + "_paid/" + getHash());
     }
 
-    public void calcel(PostWorkData data) {
+    public void calcel() {
         unixDateOfCanceling = unixNow();
-        setStatus(CANCELED, data);
+        setStatus(CANCELED);
     }
 
-    public void process(PostWorkData data) {
+    public void process() {
         unixDateOfStartProcessing = unixNow();
-        setStatus(PROCESSING, data);
+        setStatus(PROCESSING);
     }
 
-    public void endContest(PostWorkData data) {
+    public void endContest() {
         unixDateOfEndingContest = unixNow();
     }
 
-    public void review(PostWorkData data) {
+    public void review() {
         unixDateOfStartReviewing = unixNow();
-        setStatus(REVIEWING, data);
+        setStatus(REVIEWING);
     }
 
 
-    public int getId() {
-        return id;
+    public Long getId() {
+        return (long) id;
     }
 
     public void setName(String name) {
@@ -251,6 +263,7 @@ public class Contract implements Serializable {
             name = object.getString("name");
             additional = object.getString("additional");
             comment = object.getString("comment");
+            dataURI = object.getString("dataURI");
             price = object.getInt("price");
 
             unixDateOfApplying = object.getLong("unixDateOfApplying");
@@ -259,6 +272,7 @@ public class Contract implements Serializable {
             unixDateOfStartReviewing = object.getLong("unixDateOfStartReviewing");
             unixDateOfGiveOff = object.getLong("unixDateOfGiveOff");
             unixDateOfEndingContest = object.getLong("unixDateOfEndingContest");
+            contractUser = object.getLong("contractUser");
 
             typeHash = object.getString("typeHash");
             status = object.getString("status");
@@ -274,14 +288,16 @@ public class Contract implements Serializable {
         return true;
     }
 
-    public void writeTo(String destinationPath) {
+    private void writeTo(String destinationPath) {
         HashMap<String, Object> dataset = new HashMap<>();
 
         dataset.put("id", id);
         dataset.put("name", name);
         dataset.put("additional", additional);
         dataset.put("comment", comment);
+        dataset.put("dataURI", dataURI);
         dataset.put("price", price);
+        dataset.put("contractUser", contractUser);
 
         dataset.put("unixDateOfApplying", unixDateOfApplying);
         dataset.put("unixDateOfEndingContest", unixDateOfEndingContest);
@@ -402,5 +418,45 @@ public class Contract implements Serializable {
             }
         }
         return builder.toString();
+    }
+
+    public Long getUnixDateOfApplying() {
+        return unixDateOfApplying;
+    }
+
+    public Long getUnixDateOfPurchase() {
+        return unixDateOfPurchase;
+    }
+
+    public Long getUnixDateOfStartProcessing() {
+        return unixDateOfStartProcessing;
+    }
+
+    public Long getUnixDateOfStartReviewing() {
+        return unixDateOfStartReviewing;
+    }
+
+    public Long getUnixDateOfGiveOff() {
+        return unixDateOfGiveOff;
+    }
+
+    public Long getUnixDateOfEndingContest() {
+        return unixDateOfEndingContest;
+    }
+
+    public Long getUnixDateOfCanceling() {
+        return unixDateOfCanceling;
+    }
+
+    public String getDataURI() {
+        return dataURI;
+    }
+
+    public void setDataURI(String dataURI) {
+        this.dataURI = dataURI;
+    }
+
+    public void setUser(long contractUser) {
+        this.contractUser = contractUser;
     }
 }

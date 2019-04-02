@@ -125,32 +125,6 @@ public class ContractUser implements Serializable {
             else
                 messageId = null;
 
-            /*if (object.has("contracts")) { // we should not save\load contracts from ContractUser json
-                JSONArray jsonArray = object.getJSONArray("contracts");
-                for (int i = 0; i < jsonArray.length(); ++i) {
-
-                    Map<String, Object> objMap = jsonArray.getJSONObject(i).toMap();
-
-                    Log.Info(jsonArray.getJSONObject(i).toString(), Log.VERBOSE);
-
-                    String additional = (String) objMap.get("additional");
-                    String name = (String) objMap.get("name");
-                    String comment = (String) objMap.get("comment");
-                    Integer price = (Integer) objMap.get("price");
-                    Integer id = (Integer) objMap.get("id");
-                    Boolean applied = (Boolean) objMap.get("applied");
-                    String status = (String) objMap.get("status");
-
-                    Contract contract = new Contract(name, additional, comment, price, applied, id, status);
-                    if (!contracts.contains(contract)) {
-                        contracts.add(contract);
-                        Log.Info("Loaded contract " + name + " " + price + "₴ for user " + username + "[" + this.id + "]|" + firstname);
-                    } else {
-                        Log.Info("Contracts list already has contract №" + contract.getId());
-                    }
-
-                }
-            }*/
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
@@ -158,10 +132,18 @@ public class ContractUser implements Serializable {
 
         Log.Info(fileName + " is valid ContractUser JSON");
 
-        File file = new File(fileName + "_dir");
-        if (file.exists() && file.isDirectory()) {
-            File[] contents = file.listFiles();
-            if (contents != null && contents.length > 0) {
+        File dir = new File(base_uri);
+        File[] files = dir.listFiles((dir1, name) -> {
+            Log.Info("Looking at file '" + name + "'");
+            return name.startsWith(id.toString());
+        });
+        if (files != null)
+            for (File file : files) {
+                if (!file.exists() || !file.isDirectory())
+                    continue;
+                File[] contents = file.listFiles();
+                if (contents == null || contents.length == 0)
+                    continue;
                 Log.Info("Found " + contents.length + " contracts in " + file.getPath());
                 for (File testContract : contents) {
                     if (testContract.isFile()) {
@@ -179,8 +161,8 @@ public class ContractUser implements Serializable {
                         Log.Info(testContract.getPath() + " is not a file", Log.VERBOSE);
                     }
                 }
+
             }
-        }
         return true;
     }
 
@@ -250,4 +232,6 @@ public class ContractUser implements Serializable {
         if (!contract.isFreshNew())
             contract.setComment(handleMessage);
     }
+
+
 }

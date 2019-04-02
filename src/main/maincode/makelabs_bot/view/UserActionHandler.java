@@ -148,8 +148,9 @@ public class UserActionHandler implements MessageHandler {
                         // So, we finally have comment following order - show check out page and set status to applied
                         // Then ask for payment and check when payed
                         // TODO create a background service for checking analytics time and payments made
+                        contract.setUser(contractUser.getId());
                         contract.apply(workData);
-                        contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
+                        //contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
                         Send(contract.toString());
                         getHome(); // TODO go checkout instead of home
                     }

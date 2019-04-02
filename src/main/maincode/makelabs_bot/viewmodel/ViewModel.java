@@ -91,9 +91,9 @@ public class ViewModel extends Observable {
             if (message != null
                     && message.hasText()
                     && contractUser.getWaitingForComment()) {
-                handleMessage = "Подтвердить";
                 contractUser.setComment(handleMessage);
                 contractUser.setWaitingForComment(false);
+                handleMessage = "Подтвердить";
             }
 
         }

@@ -14,6 +14,7 @@ public class Log {
     public static final int VERBOSE = 25;
     public static final int EVERYTHING = 10;
     public static final int ANALYTICS = 65;
+    public static final int PAYMENT_SERVICE = 66;
     private static int level;
     private static Long logStart = -1L;
 
@@ -28,28 +29,50 @@ public class Log {
         Info(str, DEBUG);
     }
 
-    public static void Info(String str, int level) {
+    public synchronized static void Info(String str, int level) {
         setLogStart();
-        if (level == ANALYTICS) {
-            if (str.length() > 2)
-                str = "[Stats]" + str;
-            try {
-                File logsDir = new File("./logs");
-                if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory())) {
-                    String logFileName = "./logs/" + logStart;
-                    File logFile = new File(logFileName);
-                    logFile.createNewFile();
-                    String logFileData = str + "\n\r";
-                    Files.write(Paths.get(logFileName), logFileData.getBytes(), StandardOpenOption.APPEND);
-                }
-                else
-                    System.err.println("Could not open " + logsDir.getAbsolutePath() + " directory.\nOmitting logging");
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (str.length() > 2) {
+            str = "\t" + str;
+            switch (level) {
+                case ANALYTICS:
+                    str = "[ANALYTICS]\t" + str;
+                    break;
+                case MAIN:
+                    str = "[MAIN]\t\t\t" + str;
+                    break;
+                case EXTENDED:
+                    str = "[EXTENDED]\t\t" + str;
+                    break;
+                case DEBUG:
+                    str = "[DEBUG]\t\t\t" + str;
+                    break;
+                case VERBOSE:
+                    str = "[VERBOSE]\t\t" + str;
+                    break;
+                case EVERYTHING:
+                    str = "[EVERYTHING]\t" + str;
+                    break;
+                case PAYMENT_SERVICE:
+                    str = "[PAYMENT_SERVICE]\t" + str;
+                    break;
+                default:
             }
         }
         if (level >= Log.level) {
             System.out.println(str);
+        }
+        try {
+            File logsDir = new File("./logs");
+            if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory())) {
+                String logFileName = "./logs/" + logStart;
+                File logFile = new File(logFileName);
+                logFile.createNewFile();
+                String logFileData = str + "\n\r";
+                Files.write(Paths.get(logFileName), logFileData.getBytes(), StandardOpenOption.APPEND);
+            } else
+                System.err.println("Could not open " + logsDir.getAbsolutePath() + " directory.\nOmitting logging");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

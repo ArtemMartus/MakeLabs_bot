@@ -21,7 +21,7 @@ public class Analytics {
     private Map<User, Integer> editedMessagesTo = new HashMap<>();
     private Map<User, Integer> callbacksAnsweredTo = new HashMap<>();
     private Map<PostWorkData, Map<User, Integer>> postWorkDataRequested = new HashMap<>();
-    private Map<PostWorkData, Map<String, Integer>> postWorkDataStatus = new HashMap<>();
+    private Map<String, Map<String, Integer>> postWorkDataStatus = new HashMap<>();
 
 
     public static Analytics getInstance() {
@@ -129,14 +129,14 @@ public class Analytics {
             }
         }
         Log.Info("\tThe most common postWorkData status with price", Log.ANALYTICS);
-        for (Map.Entry<PostWorkData, Map<String, Integer>> entry : postWorkDataStatus.entrySet()) {
+        for (Map.Entry<String, Map<String, Integer>> entry : postWorkDataStatus.entrySet()) {
             for (Map.Entry<String, Integer> subentry : entry.getValue().entrySet()) {
-                Log.Info(shortenString(entry.getKey().getDescription())
-                        + " got status with price "
+                Log.Info("\t\t\"" +/*shortenString*/(entry.getKey())
+                        + "\" got status \""
                         + subentry.getKey()
-                        + "\t\t"
+                        + "\"\t\t"
                         + subentry.getValue()
-                        + "times", Log.ANALYTICS);
+                        + " times", Log.ANALYTICS);
             }
         }
 
@@ -220,10 +220,10 @@ public class Analytics {
                 + " messages to him already", Log.EVERYTHING);
     }
 
-    public void updatePostWorkDataStatus(PostWorkData data, String statusPlusPrice) {
-        if (data == null) return;
+    public void updatePostWorkDataStatus(String dataURI, String statusPlusPrice) {
+        if (dataURI == null || dataURI.isEmpty()) return;
         Integer times = 1;
-        Map<String, Integer> dataPairRequested = postWorkDataStatus.get(data);
+        Map<String, Integer> dataPairRequested = postWorkDataStatus.get(dataURI);
         if (dataPairRequested == null) {
             dataPairRequested = new HashMap<>();
             dataPairRequested.put(statusPlusPrice, times);
@@ -233,9 +233,9 @@ public class Analytics {
             dataPairRequested.put(statusPlusPrice, times);
         }
 
-        postWorkDataStatus.put(data, dataPairRequested);
+        postWorkDataStatus.put(dataURI, dataPairRequested);
 
-        Log.Info(shortenString(data.getDescription())
+        Log.Info(shortenString(dataURI)
                 + " status plus price -  "
                 + statusPlusPrice
                 + " - "
