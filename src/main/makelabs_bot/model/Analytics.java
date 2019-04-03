@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
+ */
+
 package main.makelabs_bot.model;
 
 import main.makelabs_bot.controllers.MakeLabs_bot;

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
+ */
+
 package main.makelabs_bot.view;
 
 import main.makelabs_bot.controllers.PostWorkController;

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
+ */
+
 package main.makelabs_bot.helper;
 
 import java.io.File;

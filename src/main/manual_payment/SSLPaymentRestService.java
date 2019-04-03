@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
+ */
+
 package main.manual_payment;
 
 import com.sun.net.httpserver.*;

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
+ */
+
 package main;
 
 import io.github.cdimascio.dotenv.Dotenv;
