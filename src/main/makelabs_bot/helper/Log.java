@@ -68,7 +68,7 @@ public class Log {
         try {
             File logsDir = new File("./logs");
             if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory())) {
-                String logFileName = "./logs/" + logStart;
+                String logFileName = "./logs/" + logStart + ".txt";
                 File logFile = new File(logFileName);
                 logFile.createNewFile();
                 String logFileData = str + "\n\r";

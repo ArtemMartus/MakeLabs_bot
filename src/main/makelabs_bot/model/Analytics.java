@@ -56,10 +56,11 @@ public class Analytics {
     public synchronized void checkTime() {
         final int second = 1;
         final int minute = second * 60;
+        final int hour = minute * 60;
 
         Long current = Calendar.getInstance().getTimeInMillis() / 1000L;
         //System.out.println("Check time \n\t"+current+"\n\t"+lastunixtime);
-        if (current - lastunixtime > minute * 15) {
+        if (current - lastunixtime > hour * 3) {
             saveCurrent(current);
         }
     }
