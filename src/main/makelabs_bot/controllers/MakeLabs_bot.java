@@ -25,7 +25,7 @@ import java.util.List;
 
 public class MakeLabs_bot extends TelegramLongPollingBot {
 
-    private final Model model;
+    public final Model model;
     private final View view;
     private final ViewModel viewModel;
     private final Analytics analytics;

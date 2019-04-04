@@ -71,4 +71,32 @@ public class Model {
         setUser(contractUser);
     }
 
+    public Contract getContract(Long byId) {
+        //todo get contract from database
+        return null;
+    }
+
+    public PostWorkData getWorkData(Long byId) {
+        //todo get workdata by id
+        return null;
+    }
+
+    public void saveContract(Contract contract) {
+        //todo save contract to database if not exists or update current record by searching with uid and work_id
+    }
+
+    public Long getContractId(Contract contract) {
+        //todo load contract id from database
+        return null;
+    }
+
+    public void saveWorkData(PostWorkData postWorkData) {
+        //todo save work data to database or update existing record
+    }
+
+
+    public Long getWorkDataId(PostWorkData postWorkData) {
+        //todo retrieve id from database
+        return null;
+    }
 }
