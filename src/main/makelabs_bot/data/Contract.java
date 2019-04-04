@@ -10,9 +10,7 @@ import org.glassfish.grizzly.utils.Pair;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,9 +24,9 @@ public class Contract implements Serializable {
 //    public static final String REVIEWING = "Конкурсные работы рассматриваются, ожидайте";
     public static final String GIVEOFF = "Ваш заказ выполнен!";
 
-    private static final String base_uri = "./users_database/";
-    private static Random random = new Random();
-    private static final Calendar calendar = Calendar.getInstance();
+    //    private static final String base_uri = "./users_database/";
+//    private static Random random = new Random();
+//    private static final Calendar calendar = Calendar.getInstance();
     private final MakeLabs_bot makeLabsBot = Analytics.getInstance().getMakeLabs_bot();
 
     private Long id;
@@ -40,18 +38,56 @@ public class Contract implements Serializable {
     private Integer price = 0;
     private String status;
 
-    private Long unixDateOfApplying = -1L;
-    private Long unixDateOfPurchase = -1L;
-    private Long unixDateOfGiveOff = -1L;
+    private Long applied = -1L;
+    private Long paid = -1L;
+    private Long paymentCheckedByUID = -1L;
+    private Long takenByUID = -1L;
+
+    private Long taken = -1L;
+    private Long reviewByUID = -1L;
+    private Long gaveOff = -1L;
+    private Long gaveOffByUID = -1L;
+
+    /*
+id INT PRIMARY KEY AUTO_INCREMENT unique,
+customer_uid int not null,
+work_data_id int not null,
+name TEXT NOT NULL,
+
+additional TEXT not null,
+comment text null,
+price int not null CHECK(price >= 150),
+status text not null,
+
+applied datetime not null,
+paid datetime null default null,
+payment_checked_by_uid int null default null,
+taken_by_uid int null default null,
+
+taken datetime null default null,
+reviewed_by_uid int null default null,
+gaveoff datetime null default null,
+gaveoff_by_uid int null default null
+     */
 
     public Contract(long customer_uid) {
         this.customer_uid = customer_uid;
         setStatus(FRESH_NEW);
     }
 
+    public Contract(long customer_uid, long work_data_id, String name, String additional, String comment, Integer price) {
+        this.customer_uid = customer_uid;
+        this.work_data_id = work_data_id;
+        this.name = name;
+        this.additional = additional;
+        this.comment = comment;
+        this.price = price;
+        save();
+    }
+
     public Contract(Long id, long customer_uid, long work_data_id, String name, String additional, String comment,
-                    Integer price, String status, Long unixDateOfApplying, Long unixDateOfPurchase,
-                    Long unixDateOfGiveOff) {
+                    Integer price, String status, Long applied, Long paid, Long paymentCheckedByUID, Long takenByUID,
+                    Long taken, Long reviewByUID, Long gaveOff, Long gaveOffByUID) {
         this.id = id;
         this.customer_uid = customer_uid;
         this.work_data_id = work_data_id;
@@ -60,25 +96,14 @@ public class Contract implements Serializable {
         this.comment = comment;
         this.price = price;
         this.status = status;
-        this.unixDateOfApplying = unixDateOfApplying;
-        this.unixDateOfPurchase = unixDateOfPurchase;
-        this.unixDateOfGiveOff = unixDateOfGiveOff;
-    }
-
-    public Contract(long customer_uid, long work_data_id, String name, String additional, String comment,
-                    Integer price, String status, Long unixDateOfApplying, Long unixDateOfPurchase,
-                    Long unixDateOfGiveOff) {
-        this.customer_uid = customer_uid;
-        this.work_data_id = work_data_id;
-        this.name = name;
-        this.additional = additional;
-        this.comment = comment;
-        this.price = price;
-        this.status = status;
-        this.unixDateOfApplying = unixDateOfApplying;
-        this.unixDateOfPurchase = unixDateOfPurchase;
-        this.unixDateOfGiveOff = unixDateOfGiveOff;
-        save();
+        this.applied = applied;
+        this.paid = paid;
+        this.paymentCheckedByUID = paymentCheckedByUID;
+        this.takenByUID = takenByUID;
+        this.taken = taken;
+        this.reviewByUID = reviewByUID;
+        this.gaveOff = gaveOff;
+        this.gaveOffByUID = gaveOffByUID;
     }
 
     public void setUpAllIncluding(PostWorkData data) throws Exception {
@@ -99,11 +124,11 @@ public class Contract implements Serializable {
 //            this.additional = "";
 //            this.comment = "";
 //            this.price = 0;
-//            unixDateOfApplying
-//                    = unixDateOfPurchase
+//            applied
+//                    = paid
 //                    = unixDateOfStartProcessing
 //                    = unixDateOfStartReviewing
-//                    = unixDateOfGiveOff
+//                    = gaveOff
 //                    = unixDateOfEndingContest
 //                    = unixDateOfCanceling
 //                    = -1L;
@@ -126,13 +151,13 @@ public class Contract implements Serializable {
     public void save() {
 //        we can't insert contract id into database as it's being generated automatically
         makeLabsBot.model.saveContract(this);
-        if ((id == null || id < 0) && unixDateOfApplying > 0)
+        if ((id == null || id < 0) && applied > 0)
             id = makeLabsBot.model.getContractId(this);
     }
 
     public void apply(/*PostWorkData data*/) {
 //        dataURI = data.getIURI();
-        unixDateOfApplying = unixNow();
+        applied = unixNow();
         setStatus(APPLIED);
 //        writeTo(contractUser + "_applied/" + getHash());
     }
@@ -144,14 +169,14 @@ public class Contract implements Serializable {
 //            e.printStackTrace();
 //        }
 
-        unixDateOfPurchase = unixNow();
+        paid = unixNow();
         setStatus(PURCHASED);
 
 //        writeTo(contractUser + "_paid/" + getHash());
     }
 
     public void giveOff() {
-        unixDateOfGiveOff = unixNow();
+        gaveOff = unixNow();
         setStatus(GIVEOFF);
     }
 
@@ -243,11 +268,11 @@ public class Contract implements Serializable {
 //            dataURI = object.getString("dataURI");
 //            price = object.getInt("price");
 //
-//            unixDateOfApplying = object.getLong("unixDateOfApplying");
+//            applied = object.getLong("applied");
 //            unixDateOfStartProcessing = object.getLong("unixDateOfStartProcessing");
-//            unixDateOfPurchase = object.getLong("unixDateOfPurchase");
+//            paid = object.getLong("paid");
 //            unixDateOfStartReviewing = object.getLong("unixDateOfStartReviewing");
-//            unixDateOfGiveOff = object.getLong("unixDateOfGiveOff");
+//            gaveOff = object.getLong("gaveOff");
 //            unixDateOfEndingContest = object.getLong("unixDateOfEndingContest");
 //            contractUser = object.getLong("contractUser");
 //
@@ -276,12 +301,12 @@ public class Contract implements Serializable {
 //        dataset.put("price", price);
 //        dataset.put("contractUser", contractUser);
 //
-//        dataset.put("unixDateOfApplying", unixDateOfApplying);
+//        dataset.put("applied", applied);
 //        dataset.put("unixDateOfEndingContest", unixDateOfEndingContest);
 //        dataset.put("unixDateOfStartProcessing", unixDateOfStartProcessing);
-//        dataset.put("unixDateOfPurchase", unixDateOfPurchase);
+//        dataset.put("paid", paid);
 //        dataset.put("unixDateOfStartReviewing", unixDateOfStartReviewing);
-//        dataset.put("unixDateOfGiveOff", unixDateOfGiveOff);
+//        dataset.put("gaveOff", gaveOff);
 //
 //
 //        dataset.put("typeHash", typeHash);
@@ -339,19 +364,19 @@ public class Contract implements Serializable {
             case APPLIED: {
                 builder
                         .append("\nЗаказ принят ")
-                        .append(Analytics.getTime(unixDateOfApplying));
+                        .append(Analytics.getTime(applied));
                 break;
             }
             case PURCHASED: {
                 builder
                         .append("\nЗаказ оплачен ")
-                        .append(Analytics.getTime(unixDateOfPurchase));
+                        .append(Analytics.getTime(paid));
                 break;
             }
             case GIVEOFF: {
                 builder
                         .append("\nРабота сдана ")
-                        .append(Analytics.getTime(unixDateOfGiveOff));
+                        .append(Analytics.getTime(gaveOff));
                 break;
             }
         }
@@ -417,15 +442,15 @@ public class Contract implements Serializable {
         save();
     }
 
-    public Long getUnixDateOfApplying() {
-        return unixDateOfApplying;
+    public Long getApplied() {
+        return applied;
     }
 
-    public Long getUnixDateOfPurchase() {
-        return unixDateOfPurchase;
+    public Long getPaid() {
+        return paid;
     }
 
-    public Long getUnixDateOfGiveOff() {
-        return unixDateOfGiveOff;
+    public Long getGaveOff() {
+        return gaveOff;
     }
 }

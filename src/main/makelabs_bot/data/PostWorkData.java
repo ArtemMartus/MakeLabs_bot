@@ -19,10 +19,20 @@ public class PostWorkData {
     private Long id;
     private List<Pair<String, Integer>> params = new LinkedList<>();
     private String description;
-    private Long createdByUid = -1L;
+    private Long createdByUid;
+    private Long created;
     private String uri;
 
 
+    /*
+    id INT PRIMARY KEY AUTO_INCREMENT unique,
+    params_json text not null,
+    description text not null,
+
+    created_by_uid int not null,
+    created datetime not null default now(),
+    uri text not null
+     */
     public PostWorkData(Long id, String jsonParams, String description, Long createdByUid, String uri) {
         this.id = id;
         setParams(jsonParams);
