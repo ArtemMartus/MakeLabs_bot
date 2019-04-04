@@ -5,10 +5,10 @@
 package main.makelabs_bot.view;
 
 import main.makelabs_bot.controllers.PostWorkController;
-import main.makelabs_bot.data.ContractUser;
-import main.makelabs_bot.data.PostWorkData;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
+import main.makelabs_bot.model.data_pojo.ContractUser;
+import main.makelabs_bot.model.data_pojo.PostWorkData;
 import main.makelabs_bot.viewmodel.ViewModel;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -63,7 +63,7 @@ public class View implements Observer {
 
                 workData = PostWorkController.getData(getUri, false);
                 viewModel.setWorkData(getUri, workData);
-                Log.Info("Loaded " + getUri + " work data for " + fromUser.getUserName());
+                Log.Info("Loaded " + getUri + " work data_pojo for " + fromUser.getUserName());
             }
 
             InlineKeyboardManager keyboardManager = new InlineKeyboardManager(workData);

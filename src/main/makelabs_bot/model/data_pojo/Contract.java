@@ -2,7 +2,7 @@
  * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
  */
 
-package main.makelabs_bot.data;
+package main.makelabs_bot.model.data_pojo;
 
 import main.makelabs_bot.controllers.MakeLabs_bot;
 import main.makelabs_bot.model.Analytics;
@@ -108,7 +108,7 @@ gaveoff_by_uid int null default null
 
     public void setUpAllIncluding(PostWorkData data) throws Exception {
         if (data.getId() == null || data.getId() < 0) {
-            throw new Exception("work data id = null");
+            throw new Exception("work data_pojo id = null");
         }
         this.work_data_id = data.getId();
         this.additional = "";
@@ -117,10 +117,10 @@ gaveoff_by_uid int null default null
         this.price = 0;
 
 //        old code down there
-//        String hash = Integer.toHexString(data.getDescription().hashCode());
+//        String hash = Integer.toHexString(data_pojo.getDescription().hashCode());
 //        if (isFreshNew() || !hash.equals(typeHash)) {
 //            id = generateRandomId();
-//            setName(data.getDescription());
+//            setName(data_pojo.getDescription());
 //            this.additional = "";
 //            this.comment = "";
 //            this.price = 0;
@@ -134,7 +134,7 @@ gaveoff_by_uid int null default null
 //                    = -1L;
 //            status = FRESH_NEW;
 //
-//            for (Pair<String, Integer> pair : data.getParams()) {
+//            for (Pair<String, Integer> pair : data_pojo.getParams()) {
 //                int price = pair.getSecond();
 //                if (price < 0)
 //                    continue;
@@ -155,8 +155,8 @@ gaveoff_by_uid int null default null
             id = makeLabsBot.model.getContractId(this);
     }
 
-    public void apply(/*PostWorkData data*/) {
-//        dataURI = data.getIURI();
+    public void apply(/*PostWorkData data_pojo*/) {
+//        dataURI = data_pojo.getIURI();
         applied = unixNow();
         setStatus(APPLIED);
 //        writeTo(contractUser + "_applied/" + getHash());
@@ -201,8 +201,8 @@ gaveoff_by_uid int null default null
 
     public String getCheckoutText(PostWorkData data) {
         int overall_price = 0;
-//        it's a get method and it shouldn't change any data
-//        setName(data.getDescription());
+//        it's a get method and it shouldn't change any data_pojo
+//        setName(data_pojo.getDescription());
         StringBuilder editedText = new StringBuilder(getName());
         editedText.append("\n");
         for (Pair<String, Integer> pair : data.getParams()) {
@@ -222,7 +222,7 @@ gaveoff_by_uid int null default null
         }
         if (overall_price > 0)
             editedText.append("\nИтого:\t").append(overall_price).append("₴");
-//                it's a get method and it shouldn't change any data
+//                it's a get method and it shouldn't change any data_pojo
 //        setPrice(overall_price);
         return editedText.toString();
     }

@@ -19,6 +19,8 @@ public class Log {
     public static final int EVERYTHING = 10;
     public static final int ANALYTICS = 65;
     public static final int PAYMENT_SERVICE = 66;
+    public static final int DATABASE_MANAGER = 67;
+    public static final int MODEL = 68;
     private static int level;
     private static Long logStart = -1L;
 
@@ -58,6 +60,12 @@ public class Log {
                     break;
                 case PAYMENT_SERVICE:
                     str = "[PAYMENT_SERVICE]\t" + str;
+                    break;
+                case DATABASE_MANAGER:
+                    str = "[DATABASE_MANAGER]\t" + str;
+                    break;
+                case MODEL:
+                    str = "[MODEL]\t" + str;
                     break;
                 default:
             }

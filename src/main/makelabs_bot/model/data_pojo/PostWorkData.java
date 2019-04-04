@@ -2,7 +2,7 @@
  * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
  */
 
-package main.makelabs_bot.data;
+package main.makelabs_bot.model.data_pojo;
 
 import main.makelabs_bot.controllers.MakeLabs_bot;
 import main.makelabs_bot.helper.Log;

@@ -4,11 +4,11 @@
 
 package main.makelabs_bot.viewmodel;
 
-import main.makelabs_bot.data.ContractUser;
-import main.makelabs_bot.data.PostWorkData;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.Model;
+import main.makelabs_bot.model.data_pojo.ContractUser;
+import main.makelabs_bot.model.data_pojo.PostWorkData;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -200,6 +200,7 @@ public class ViewModel extends Observable {
                     + fromUser.getId()
                     + "]");
 
+        //todo move it to saving whole user, not just mid
         setMessageIdForUser(fromUser.getId(), messageId);
 
         handleMessage = "/";

@@ -4,10 +4,10 @@
 
 package main.makelabs_bot.controllers;
 
-import main.makelabs_bot.data.Contract;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.Model;
+import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.view.View;
 import main.makelabs_bot.viewmodel.ViewModel;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -118,7 +118,7 @@ public class MakeLabs_bot extends TelegramLongPollingBot {
     }
 
     public List<Contract> getAllContracts() {
-        return model.getAllOpenContracts();
+        return model.getAllAppliedNotPaidContracts();
     }
 
     @Override

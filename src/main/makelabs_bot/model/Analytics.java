@@ -5,8 +5,8 @@
 package main.makelabs_bot.model;
 
 import main.makelabs_bot.controllers.MakeLabs_bot;
-import main.makelabs_bot.data.PostWorkData;
 import main.makelabs_bot.helper.Log;
+import main.makelabs_bot.model.data_pojo.PostWorkData;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.text.DateFormat;
@@ -31,8 +31,12 @@ public class Analytics {
     public static Analytics getInstance() {
         if (mInstance == null) {
             synchronized (Analytics.class) {
-                mInstance = new Analytics();
-                mInstance.lastunixtime = Calendar.getInstance().getTime().getTime() / 1000;
+                if (mInstance == null) {
+                    mInstance = new Analytics();
+                    mInstance.lastunixtime = Calendar.getInstance().getTime().getTime() / 1000;
+                    Log.Info("Analytics successfully initialized into " + mInstance.lastunixtime + ".txt",
+                            Log.ANALYTICS);
+                }
             }
         }
         return mInstance;

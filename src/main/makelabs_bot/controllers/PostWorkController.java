@@ -4,8 +4,8 @@
 
 package main.makelabs_bot.controllers;
 
-import main.makelabs_bot.data.PostWorkData;
 import main.makelabs_bot.helper.Log;
+import main.makelabs_bot.model.data_pojo.PostWorkData;
 import org.glassfish.grizzly.utils.Pair;
 
 import java.io.File;
