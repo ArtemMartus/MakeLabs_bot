@@ -115,33 +115,6 @@ gaveoff_by_uid int null default null
         this.comment = "";
         this.name = data.getDescription();
         this.price = 0;
-
-//        old code down there
-//        String hash = Integer.toHexString(data_pojo.getDescription().hashCode());
-//        if (isFreshNew() || !hash.equals(typeHash)) {
-//            id = generateRandomId();
-//            setName(data_pojo.getDescription());
-//            this.additional = "";
-//            this.comment = "";
-//            this.price = 0;
-//            applied
-//                    = paid
-//                    = unixDateOfStartProcessing
-//                    = unixDateOfStartReviewing
-//                    = gaveOff
-//                    = unixDateOfEndingContest
-//                    = unixDateOfCanceling
-//                    = -1L;
-//            status = FRESH_NEW;
-//
-//            for (Pair<String, Integer> pair : data_pojo.getParams()) {
-//                int price = pair.getSecond();
-//                if (price < 0)
-//                    continue;
-//                toogle(pair.getFirst());
-//                this.price += price;
-//            }
-//        }
     }
 
     private Long unixNow() {
@@ -155,24 +128,14 @@ gaveoff_by_uid int null default null
             id = makeLabsBot.model.getContractId(this);
     }
 
-    public void apply(/*PostWorkData data_pojo*/) {
-//        dataURI = data_pojo.getIURI();
+    public void apply() {
         applied = unixNow();
         setStatus(APPLIED);
-//        writeTo(contractUser + "_applied/" + getHash());
     }
 
     public void paid() {
-//        try {
-//            Files.delete(Paths.get(base_uri + contractUser + "_applied/" + getHash()));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
         paid = unixNow();
         setStatus(PURCHASED);
-
-//        writeTo(contractUser + "_paid/" + getHash());
     }
 
     public void giveOff() {
@@ -201,8 +164,6 @@ gaveoff_by_uid int null default null
 
     public String getCheckoutText(PostWorkData data) {
         int overall_price = 0;
-//        it's a get method and it shouldn't change any data_pojo
-//        setName(data_pojo.getDescription());
         StringBuilder editedText = new StringBuilder(getName());
         editedText.append("\n");
         for (Pair<String, Integer> pair : data.getParams()) {
@@ -222,8 +183,6 @@ gaveoff_by_uid int null default null
         }
         if (overall_price > 0)
             editedText.append("\nИтого:\t").append(overall_price).append("₴");
-//                it's a get method and it shouldn't change any data_pojo
-//        setPrice(overall_price);
         return editedText.toString();
     }
 
@@ -251,91 +210,6 @@ gaveoff_by_uid int null default null
         return str;
     }
 
-//    Move that functionality to database controller class
-
-//    public boolean loadFrom(String destinationPath) {
-//        String fileName = destinationPath;
-//        if (!Files.exists(Paths.get(fileName))) // nothing to load
-//            return false;
-//
-//        try {
-//            String fileData = new String(Files.readAllBytes(Paths.get(fileName))); // Read from file
-//            JSONObject object = new JSONObject(fileData);
-//
-//            name = object.getString("name");
-//            additional = object.getString("additional");
-//            comment = object.getString("comment");
-//            dataURI = object.getString("dataURI");
-//            price = object.getInt("price");
-//
-//            applied = object.getLong("applied");
-//            unixDateOfStartProcessing = object.getLong("unixDateOfStartProcessing");
-//            paid = object.getLong("paid");
-//            unixDateOfStartReviewing = object.getLong("unixDateOfStartReviewing");
-//            gaveOff = object.getLong("gaveOff");
-//            unixDateOfEndingContest = object.getLong("unixDateOfEndingContest");
-//            contractUser = object.getLong("contractUser");
-//
-//            typeHash = object.getString("typeHash");
-//            status = object.getString("status");
-//            id = object.getInt("id");
-//
-//
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//            return false;
-//        }
-//
-//        Log.Info(fileName + " is valid Contract JSON");
-//        return true;
-//    }
-//
-//    private void writeTo(String destinationPath) {
-//        HashMap<String, Object> dataset = new HashMap<>();
-//
-//        dataset.put("id", id);
-//        dataset.put("name", name);
-//        dataset.put("additional", additional);
-//        dataset.put("comment", comment);
-//        dataset.put("dataURI", dataURI);
-//        dataset.put("price", price);
-//        dataset.put("contractUser", contractUser);
-//
-//        dataset.put("applied", applied);
-//        dataset.put("unixDateOfEndingContest", unixDateOfEndingContest);
-//        dataset.put("unixDateOfStartProcessing", unixDateOfStartProcessing);
-//        dataset.put("paid", paid);
-//        dataset.put("unixDateOfStartReviewing", unixDateOfStartReviewing);
-//        dataset.put("gaveOff", gaveOff);
-//
-//
-//        dataset.put("typeHash", typeHash);
-//        dataset.put("status", status);
-//
-//        JSONObject object = new JSONObject(dataset);
-//
-//        String filename = base_uri + destinationPath;
-//
-//
-//
-//        Log.Info("Generating form " + filename + " " + object.toString(), Log.VERBOSE);
-//
-//
-//        Path path = Paths.get(filename);
-//        File file = new File(path.getParent().toUri());
-//
-//
-//        try {
-//            if (file.mkdirs()
-//                    || (file.exists()
-//                    && file.isDirectory()))
-//                Files.write(path, object.toString().getBytes());
-//            else
-//                System.err.println("Cannot access " + file.getAbsolutePath() + " directory");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     @Override
     public String toString() {

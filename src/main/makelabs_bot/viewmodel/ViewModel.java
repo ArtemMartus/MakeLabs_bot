@@ -7,6 +7,7 @@ package main.makelabs_bot.viewmodel;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.Model;
+import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.model.data_pojo.ContractUser;
 import main.makelabs_bot.model.data_pojo.PostWorkData;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -15,12 +16,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 
+import java.util.List;
 import java.util.Observable;
 
 public class ViewModel extends Observable {
 
     private final Model model;
-    private Update update;
     private ContractUser contractUser;
     private String handleMessage;
     private Integer messageId;
@@ -28,16 +29,14 @@ public class ViewModel extends Observable {
     private String inlineId;
     private Long chatId;
     private User fromUser;
-    private final BackgroundService backgroundService;
 
     public ViewModel(Model model) {
         this.model = model;
-        backgroundService = new BackgroundService();
+        new BackgroundService();
         Log.Info("ViewModel initialized");
     }
 
     public void setUpdate(Update update) {
-        this.update = update;
 
         InlineQuery inlineQuery = update.getInlineQuery();
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -68,17 +67,12 @@ public class ViewModel extends Observable {
             return;
         }
 
-        //if (message != null || callbackQuery != null || inlineQuery != null)
-        {
             Message localMessage = message == null ? (callbackQuery != null ? callbackQuery.getMessage() : null) : message;
             if (localMessage != null) {
                 chatId = localMessage.getChatId();
             } else {
                 chatId = null;
             }
-            messageId = contractUser.getMessageId();
-            if (messageId == null)
-                messageId = getMessageIdForUser(fromUser.getId());
 
             handleMessage = message != null && message.getText() != null ?
                     message.getText() :
@@ -87,20 +81,15 @@ public class ViewModel extends Observable {
             if (handleMessage == null) {
                 handleMessage = inlineQuery != null ? inlineQuery.getQuery() : null;
             }
-//            else if(contractUser!=null){
-//                CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(),handleMessage);
-//                handleMessage = commandBuilder.getURI();
+
+//            if (message != null
+//                    && message.hasText()
+//                    && contractUser.getWaitingForComment()) {
+//                contractUser.setComment(handleMessage);
+//                contractUser.setWaitingForComment(false);
+//                handleMessage = "Подтвердить";
 //            }
 
-            if (message != null
-                    && message.hasText()
-                    && contractUser.getWaitingForComment()) {
-                contractUser.setComment(handleMessage);
-                contractUser.setWaitingForComment(false);
-                handleMessage = "Подтвердить";
-            }
-
-        }
 
         setChanged();
         notifyObservers();
@@ -115,17 +104,23 @@ public class ViewModel extends Observable {
         }
         String username = fromUser.getUserName();
         String firstname = fromUser.getFirstName();
+        String lastname = fromUser.getLastName();
 
         if (fromUser.getId() == 0) {
             Log.Info("userId == 0 Invalid update", Log.VERBOSE);
             return null;
         }
         ContractUser usr = model.getUser(fromUser.getId());
+
         if (usr == null) {
+            messageId = getMessageIdForUser(fromUser.getId());
             usr = new ContractUser(fromUser.getId(),
-                    username, firstname);
-//            usr.setState("/");
-            model.setUser(usr);
+                    username, firstname, lastname, messageId);
+            model.saveContractUser(usr);
+        } else {
+            messageId = contractUser.getMessageId();
+            if (messageId == null)
+                messageId = getMessageIdForUser(fromUser.getId());
         }
         return usr;
     }
@@ -172,23 +167,15 @@ public class ViewModel extends Observable {
         return fromUser;
     }
 
-    public void setMessageIdForUser(Integer uid, Integer mid) {
-        model.setMessageId(uid, mid);
-    }
-
     public PostWorkData getWorkData(String state, User userRequested) {
         return model.getPostWorkData(state, userRequested);
     }
 
-    public void setWorkData(String state, PostWorkData workData) {
-        model.setPostWorkData(state, workData);
+    public void setWorkData(PostWorkData workData) {
+        model.setPostWorkData(workData);
     }
 
     public Integer initializeUserState() {
-        //commenting those three lines makes it force-update message id
-//        messageId = getMessageIdForUser(fromUser.getId());
-//        if (messageId == null || messageId == 0) {
-
         Message message = Analytics.getInstance().getMakeLabs_bot().sendMessage(".", chatId
                 , null, fromUser);
         if (message != null)
@@ -200,16 +187,28 @@ public class ViewModel extends Observable {
                     + fromUser.getId()
                     + "]");
 
-        //todo move it to saving whole user, not just mid
-        setMessageIdForUser(fromUser.getId(), messageId);
 
         handleMessage = "/";
-        contractUser.setState(handleMessage);
-//        }
+        contractUser.setStateUri(handleMessage);
+        contractUser.setMessageId(messageId);
+        model.saveContractUser(contractUser);
+
         return messageId;
     }
 
-    public void setContractUserForId(ContractUser usr) {
+    public void saveContractUser(ContractUser usr) {
         model.setUser(usr);
+    }
+
+    public List<Contract> getContracts(ContractUser contractUser) {
+        return model.getAllUserContracts(contractUser);
+    }
+
+    public Contract getUnappliedContract(ContractUser contractUser) {
+        return model.getUnappliedContract(contractUser);
+    }
+
+    public void saveContract(Contract contract) {
+        model.saveContract(contract);
     }
 }

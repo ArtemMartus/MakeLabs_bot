@@ -85,4 +85,18 @@ public class Model {
         //todo retrieve id from database
         return null;
     }
+
+    public void saveContractUser(ContractUser contractUser) {
+        //todo save contract user
+    }
+
+    public List<Contract> getAllUserContracts(ContractUser contractUser) {
+        //todo get all contracts for user
+        return null;
+    }
+
+    public Contract getUnappliedContract(ContractUser contractUser) {
+        //todo get unapplied contract for user
+        return null;
+    }
 }

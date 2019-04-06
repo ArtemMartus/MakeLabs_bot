@@ -69,13 +69,14 @@ public class UserActionHandler implements MessageHandler {
         messageId = viewModel.initializeUserState();
         commandBuilder.setHome();
         workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
+        contractUser.setMessageId(messageId);
     }
 
     private void Send(String message) {
         Analytics.getInstance().getMakeLabs_bot().sendMessage(message, chatId, null, fromUser);
     }
 
-    private boolean precheck() {
+    private boolean precheck() throws Exception {
         String command = commandBuilder.getCommand();
         switch (command) {
             case "start": {
@@ -111,7 +112,7 @@ public class UserActionHandler implements MessageHandler {
             //TODO start planning Jobs bot
             //we can handle new jobs by asking employees for pdf task details and writing our own prices. It would be the safest way
             case "Мои заказы": {
-                List<Contract> contractList = contractUser.getContracts();
+                List<Contract> contractList = viewModel.getContracts(contractUser);
                 if (contractList.size() > 0) {
                     for (Contract contract : contractList) {
                         Send(contract.toString());
@@ -136,28 +137,22 @@ public class UserActionHandler implements MessageHandler {
             }
             case "Подтвердить": {
                 {
-                    // TODO handle comment adding
-                    //Possibly can be done by making user's state equal to '/../users_database/$UID_dir/$CONTRACTID_dir/comment'
+                    Contract contract = viewModel.getUnappliedContract(contractUser);
+//                    if (contract.getComment().isEmpty()) {
+//                        contractUser.setWaitingForComment(true);
+//                        Send("Введите комментарий к заказу ( к примеру вариант задания )");
+//                        return true;
+//                    } else {
 
-                    // TODO add payments
-                    //Possibly should use new uri like /users_database/$UID_dir/$CONTRACTID_dir/checkout  and be a copy of sampled layout with changed prices
-
-                    Contract contract = contractUser.getUnAppliedContract();
-                    if (contract.getComment().isEmpty()) {
-                        contractUser.setWaitingForComment(true);
-                        Send("Введите комментарий к заказу ( к примеру вариант задания )");
-                        return true;
-                    } else {
-
-                        // So, we finally have comment following order - show check out page and set status to applied
-                        // Then ask for payment and check when payed
-                        // TODO create a background service for checking analytics time and payments made
-                        contract.setUser(contractUser.getId());
-                        contract.apply(workData);
-                        //contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
-                        Send(contract.toString());
-                        getHome(); // TODO go checkout instead of home
-                    }
+                    // So, we finally have comment following order - show check out page and set status to applied
+                    // Then ask for payment and check when payed
+                    contract.setUpAllIncluding(workData);
+                    //contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
+                    viewModel.saveContract(contract);
+                    Send(contract.toString());
+                    Send("Оплатите заказ переводом в " + contract.getPrice() + "₴ на карту монобанка 5375411401989640,");
+                    getHome(); // TODO go checkout instead of home
+//                    }
                 }
                 break; // has it be return true?
             }
@@ -168,7 +163,7 @@ public class UserActionHandler implements MessageHandler {
                 workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
 
                 if (workData.hasChild(commandBuilder.getCommand())) {
-                    Contract contract = contractUser.getUnAppliedContract();
+                    Contract contract = viewModel.getUnappliedContract(contractUser);
 
                     contract.setUpAllIncluding(workData);
 
@@ -189,14 +184,19 @@ public class UserActionHandler implements MessageHandler {
         boolean returnPrecheck = false;
         if (!commandBuilder.baseUrlValid()
                 && !commandBuilder.getCommand().isEmpty()) {
-            returnPrecheck = precheck();
+            try {
+                returnPrecheck = precheck();
+            } catch (Exception e) {
+                e.printStackTrace();// may be interesting
+                return;
+            }
         }
         if (messageId == null) {
             handled = returnPrecheck;
         }
 
-        contractUser.setState(commandBuilder.getValidURI());
-        viewModel.setContractUserForId(contractUser);
+        contractUser.setStateUri(commandBuilder.getValidURI());
+        viewModel.saveContractUser(contractUser);
 
         //debug only
 //        workData = null;
@@ -205,13 +205,14 @@ public class UserActionHandler implements MessageHandler {
         if (workData == null) {
             Log.Info("Some strange shit makes data_pojo set to null...");
             workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
-            if (workData == null) {
-                Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
-                workData = PostWorkController.getData(commandBuilder.getValidURI(), false);
-                viewModel.setWorkData(commandBuilder.getValidURI(), workData);
-            }
+//            if (workData == null) {
+//                Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
+//                workData = PostWorkController.getData(commandBuilder.getValidURI(), false);
+//                viewModel.setWorkData(commandBuilder.getValidURI(), workData);
+//            }
             if (workData == null) {
                 Log.Info("It is still null... Do PostWorkController has it??");
+                return;
             }
         }
 
@@ -226,14 +227,18 @@ public class UserActionHandler implements MessageHandler {
                 if (!str.equals("/"))
                     str += "/";
                 str += pair.getFirst();
-                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) {
+                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) { //todo imp pathExists function
                     is_not_endpoint = false;
                     break;
                 }
             }
             if (!is_not_endpoint) {// If we just loaded last branch show the recipe for unapply contract
-                Contract contract = contractUser.getUnAppliedContract();
-                contract.setUpAllIncluding(workData);
+                Contract contract = viewModel.getUnappliedContract(contractUser);
+                try {
+                    contract.setUpAllIncluding(workData);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 editedText = contract.getCheckoutText(workData);
             }
         }

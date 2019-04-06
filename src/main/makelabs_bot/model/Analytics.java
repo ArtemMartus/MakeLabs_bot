@@ -129,7 +129,7 @@ public class Analytics {
             for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
                 Log.Info(userDataString(subentry.getKey())
                         + " visited URI:'"
-                        + entry.getKey().getIURI()
+                        + entry.getKey().getUri()
                         + "'\t=\t("
                         + shortenString(entry.getKey().getDescription())
                         + ")\t--\t--\t was requested by user\t"
@@ -229,25 +229,25 @@ public class Analytics {
                 + " messages to him already", Log.EVERYTHING);
     }
 
-    public void updatePostWorkDataStatus(String dataURI, String statusPlusPrice) {
-        if (dataURI == null || dataURI.isEmpty()) return;
-        Integer times = 1;
-        Map<String, Integer> dataPairRequested = postWorkDataStatus.get(dataURI);
-        if (dataPairRequested == null) {
-            dataPairRequested = new HashMap<>();
-            dataPairRequested.put(statusPlusPrice, times);
-        } else {
-            times = dataPairRequested.get(statusPlusPrice);
-            times = times == null ? 1 : ++times;
-            dataPairRequested.put(statusPlusPrice, times);
-        }
-
-        postWorkDataStatus.put(dataURI, dataPairRequested);
-
-        Log.Info(shortenString(dataURI)
-                + " status plus price -  "
-                + statusPlusPrice
-                + " - "
-                + times + " items", Log.EVERYTHING);
-    }
+//    public void updatePostWorkDataStatus(String dataURI, String statusPlusPrice) {
+//        if (dataURI == null || dataURI.isEmpty()) return;
+//        Integer times = 1;
+//        Map<String, Integer> dataPairRequested = postWorkDataStatus.get(dataURI);
+//        if (dataPairRequested == null) {
+//            dataPairRequested = new HashMap<>();
+//            dataPairRequested.put(statusPlusPrice, times);
+//        } else {
+//            times = dataPairRequested.get(statusPlusPrice);
+//            times = times == null ? 1 : ++times;
+//            dataPairRequested.put(statusPlusPrice, times);
+//        }
+//
+//        postWorkDataStatus.put(dataURI, dataPairRequested);
+//
+//        Log.Info(shortenString(dataURI)
+//                + " status plus price -  "
+//                + statusPlusPrice
+//                + " - "
+//                + times + " items", Log.EVERYTHING);
+//    }
 }

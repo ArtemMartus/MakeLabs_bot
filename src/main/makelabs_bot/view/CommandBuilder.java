@@ -4,8 +4,6 @@
 
 package main.makelabs_bot.view;
 
-import main.makelabs_bot.controllers.PostWorkController;
-
 public class CommandBuilder implements MessageHandler {
     private String currentState;
     private String command;
@@ -59,7 +57,10 @@ public class CommandBuilder implements MessageHandler {
             else if (!command.equals("/"))
                 uri += command;
 
-            validUri = PostWorkController.validifyPath(uri, false);
+//            validUri = PostWorkController.validifyPath(uri, false);
+            //currently for debug only
+            //todo implement adequate valid path seeking
+            this.validUri = uri;
 
             int lastSlash = uri.lastIndexOf("/");
             validCommand = uri.substring(lastSlash + 1);

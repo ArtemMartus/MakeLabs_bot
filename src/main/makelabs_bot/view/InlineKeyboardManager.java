@@ -49,22 +49,12 @@ public class InlineKeyboardManager implements MessageHandler {
 
         List<Pair<String, Integer>> data = workData.getParams();
 
-        //Log.Info("Found " + data_pojo.size() + " buttons for " + user.getState(), Log.VERBOSE);
-
         int buttons = data.size();
         //final int chars_in_a_row = 62; //desktop
         final int chars_in_a_row = 48;  //mobile
         final int columns = 3;
 
-//        Log.Info("Buttons data_pojo before sort ");
-//        for (Pair<String, Integer> pair : data_pojo)
-//            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
-
         data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
-
-//        Log.Info("Buttons data_pojo after sort ");
-//        for (Pair<String, Integer> pair : data_pojo)
-//            Log.Info("\t" + pair.getFirst() + " = " + pair.getSecond());
 
         List<InlineKeyboardButton> appendToTheEndButtons = new LinkedList<>();
 
@@ -76,7 +66,6 @@ public class InlineKeyboardManager implements MessageHandler {
                 int price = data.get(current_id).getSecond();
 
                 cch -= buttonText.length();
-//                Log.Info("Adding " + buttonText + " to layout", Log.VERBOSE);
 
                 if (price == -99) {
                     appendToTheEndButtons.add(
@@ -94,7 +83,6 @@ public class InlineKeyboardManager implements MessageHandler {
                                 cch < data.get(current_id + 1).getFirst().length())) {
                     layout.add(row);
                     row = new LinkedList<>();
-                    //buttonText = shortenName(buttonText);
                 }
 
             }
@@ -111,12 +99,13 @@ public class InlineKeyboardManager implements MessageHandler {
 
     @Override
     public void handle() {
-        updateData(workData);
+        if (isValid()) {
+            updateData(workData);
+        }
     }
 
     @Override
     public boolean isValid() {
-        return workData != null
-                && workData.isValid();
+        return workData != null;
     }
 }
