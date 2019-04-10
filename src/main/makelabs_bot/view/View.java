@@ -4,7 +4,6 @@
 
 package main.makelabs_bot.view;
 
-import main.makelabs_bot.controllers.PostWorkController;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.data_pojo.ContractUser;
@@ -42,8 +41,8 @@ public class View implements Observer {
         }
 
         if (contractUser != null
-                && contractUser.getState() != null
-                && !contractUser.getState().isEmpty()
+                && contractUser.getStateUri() != null
+                && !contractUser.getStateUri().isEmpty()
                 && fromUser != null
                 && chatId != null
                 && gotMessage != null
@@ -53,16 +52,15 @@ public class View implements Observer {
             CallbackMessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId,
                     null, fromUser);
 
-            CommandBuilder commandBuilder = new CommandBuilder(contractUser.getState(), gotMessage);
+            CommandBuilder commandBuilder = new CommandBuilder(contractUser.getStateUri(), gotMessage);
             RegularMessageHandler regularMessageHandler = new RegularMessageHandler(commandBuilder, fromUser, chatId);
 
             String getUri = commandBuilder.getValidURI();
 
             PostWorkData workData = viewModel.getWorkData(getUri, fromUser);
             if (workData == null) {
-
-                workData = PostWorkController.getData(getUri, false);
-                viewModel.setWorkData(getUri, workData);
+//                workData = viewModel.r.getData(getUri, false);
+//                viewModel.setWorkData(getUri, workData);
                 Log.Info("Loaded " + getUri + " work data_pojo for " + fromUser.getUserName());
             }
 

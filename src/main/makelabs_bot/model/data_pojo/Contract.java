@@ -4,13 +4,14 @@
 
 package main.makelabs_bot.model.data_pojo;
 
-import main.makelabs_bot.controllers.MakeLabs_bot;
 import main.makelabs_bot.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,6 @@ public class Contract implements Serializable {
     //    private static final String base_uri = "./users_database/";
 //    private static Random random = new Random();
 //    private static final Calendar calendar = Calendar.getInstance();
-    private final MakeLabs_bot makeLabsBot = Analytics.getInstance().getMakeLabs_bot();
 
     private Long id;
     private long customer_uid;
@@ -36,17 +36,17 @@ public class Contract implements Serializable {
     private String additional = "";
     private String comment = "";
     private Integer price = 0;
-    private String status;
+    private String status = "default status when creating custom contract";
 
-    private Long applied = -1L;
-    private Long paid = -1L;
-    private Long paymentCheckedByUID = -1L;
-    private Long takenByUID = -1L;
+    private Long applied;
+    private Long paid;
+    private Long paymentCheckedByUID;
+    private Long takenByUID;
 
-    private Long taken = -1L;
-    private Long reviewByUID = -1L;
-    private Long gaveOff = -1L;
-    private Long gaveOffByUID = -1L;
+    private Long taken;
+    private Long reviewByUID;
+    private Long gaveOff;
+    private Long gaveOffByUID;
 
     /*
 id INT PRIMARY KEY AUTO_INCREMENT unique,
@@ -82,12 +82,12 @@ gaveoff_by_uid int null default null
         this.additional = additional;
         this.comment = comment;
         this.price = price;
-        save();
+//        save(); not testable
     }
 
     public Contract(Long id, long customer_uid, long work_data_id, String name, String additional, String comment,
-                    Integer price, String status, Long applied, Long paid, Long paymentCheckedByUID, Long takenByUID,
-                    Long taken, Long reviewByUID, Long gaveOff, Long gaveOffByUID) {
+                    Integer price, String status, Timestamp applied, Timestamp paid, Long paymentCheckedByUID, Long takenByUID,
+                    Timestamp taken, Long reviewByUID, Timestamp gaveOff, Long gaveOffByUID) {
         this.id = id;
         this.customer_uid = customer_uid;
         this.work_data_id = work_data_id;
@@ -96,13 +96,17 @@ gaveoff_by_uid int null default null
         this.comment = comment;
         this.price = price;
         this.status = status;
-        this.applied = applied;
-        this.paid = paid;
+        if (applied != null)
+            this.applied = applied.getTime() / 1000;
+        if (paid != null)
+            this.paid = paid.getTime() / 1000;
         this.paymentCheckedByUID = paymentCheckedByUID;
         this.takenByUID = takenByUID;
-        this.taken = taken;
+        if (taken != null)
+            this.taken = taken.getTime() / 1000;
         this.reviewByUID = reviewByUID;
-        this.gaveOff = gaveOff;
+        if (gaveOff != null)
+            this.gaveOff = gaveOff.getTime() / 1000;
         this.gaveOffByUID = gaveOffByUID;
     }
 
@@ -123,9 +127,9 @@ gaveoff_by_uid int null default null
 
     public void save() {
 //        we can't insert contract id into database as it's being generated automatically
-        makeLabsBot.model.saveContract(this);
+        Analytics.getInstance().getMakeLabs_bot().model.saveContract(this);
         if ((id == null || id < 0) && applied > 0)
-            id = makeLabsBot.model.getContractId(this);
+            id = Analytics.getInstance().getMakeLabs_bot().model.getContractId(this);
     }
 
     public void apply() {
@@ -326,5 +330,67 @@ gaveoff_by_uid int null default null
 
     public Long getGaveOff() {
         return gaveOff;
+    }
+
+    public Long getPaymentCheckedByUID() {
+        return paymentCheckedByUID;
+    }
+
+    public void setPaymentCheckedByUID(Long paymentCheckedByUID) {
+        this.paymentCheckedByUID = paymentCheckedByUID;
+    }
+
+    public Long getTakenByUID() {
+        return takenByUID;
+    }
+
+    public void setTakenByUID(Long takenByUID) {
+        this.takenByUID = takenByUID;
+    }
+
+    public Long getTaken() {
+        return taken;
+    }
+
+    public void setTaken(Long taken) {
+        this.taken = taken;
+    }
+
+    public Long getReviewByUID() {
+        return reviewByUID;
+    }
+
+    public void setReviewByUID(Long reviewByUID) {
+        this.reviewByUID = reviewByUID;
+    }
+
+    public void setGaveOff(Long gaveOff) {
+        this.gaveOff = gaveOff;
+    }
+
+    public Long getGaveOffByUID() {
+        return gaveOffByUID;
+    }
+
+    public void setGaveOffByUID(Long gaveOffByUID) {
+        this.gaveOffByUID = gaveOffByUID;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Contract)) return false;
+        Contract contract = (Contract) o;
+        return getCustomer_uid() == contract.getCustomer_uid() &&
+                work_data_id == contract.work_data_id &&
+                getName().equals(contract.getName()) &&
+                getAdditional().equals(contract.getAdditional()) &&
+                getPrice().equals(contract.getPrice()) &&
+                getStatus().equals(contract.getStatus());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getCustomer_uid(), work_data_id, getName(), getAdditional(), getPrice(), getStatus());
     }
 }

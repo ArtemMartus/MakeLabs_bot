@@ -85,79 +85,88 @@ public class Analytics {
     }
 
     public void saveCurrent(Long unixtimestamp) {
-        Log.Info("\n", Log.ANALYTICS);
-        Log.Info("From  ["
-                + getTime(lastunixtime)
-                + "] -->(till)--> ["
-                + getTime(unixtimestamp)
-                + "]", Log.ANALYTICS);
 
-        Log.Info("\tAnswered user's queries", Log.ANALYTICS);
-        for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
-            Log.Info(userDataString(
-                    entry.getKey())
-                    + "\t--\t--\t answered his queries "
-                    + entry.getValue()
-                    + " times", Log.ANALYTICS);
-        }
-        Log.Info("\tSent messages to user", Log.ANALYTICS);
-        for (Map.Entry<User, Integer> entry : sentMessagesTo.entrySet()) {
-            Log.Info(userDataString(
-                    entry.getKey())
-                    + "\t--\t--\t sent "
-                    + entry.getValue()
-                    + " messages to user", Log.ANALYTICS);
-        }
-        Log.Info("\tEdited messages for user", Log.ANALYTICS);
-        for (Map.Entry<User, Integer> entry : editedMessagesTo.entrySet()) {
-            Log.Info(userDataString(
-                    entry.getKey())
-                    + "\t--\t--\t edited "
-                    + entry.getValue()
-                    + " messages with user", Log.ANALYTICS);
-        }
-        Log.Info("\tAnswered callbacks from user", Log.ANALYTICS);
-        for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
-            Log.Info(userDataString(
-                    entry.getKey())
-                    + "\t--\t--\t answered "
-                    + entry.getValue()
-                    + " callbacks from user", Log.ANALYTICS);
-        }
-        Log.Info("\tUser visited URI", Log.ANALYTICS);
-        for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
-            for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
-                Log.Info(userDataString(subentry.getKey())
-                        + " visited URI:'"
-                        + entry.getKey().getUri()
-                        + "'\t=\t("
-                        + shortenString(entry.getKey().getDescription())
-                        + ")\t--\t--\t was requested by user\t"
-                        + subentry.getValue()
+        if (postWorkDataRequested.size() > 0 ||
+                postWorkDataStatus.size() > 0 ||
+                callbacksAnsweredTo.size() > 0 ||
+                sentMessagesTo.size() > 0 ||
+                editedMessagesTo.size() > 0 ||
+                answeredQueriesTo.size() > 0) {
+
+            Log.Info("\n", Log.ANALYTICS);
+            Log.Info("From  ["
+                    + getTime(lastunixtime)
+                    + "] -->(till)--> ["
+                    + getTime(unixtimestamp)
+                    + "]", Log.ANALYTICS);
+
+            Log.Info("\tAnswered user's queries", Log.ANALYTICS);
+            for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
+                Log.Info(userDataString(
+                        entry.getKey())
+                        + "\t--\t--\t answered his queries "
+                        + entry.getValue()
                         + " times", Log.ANALYTICS);
             }
-        }
-        Log.Info("\tThe most common postWorkData status with price", Log.ANALYTICS);
-        for (Map.Entry<String, Map<String, Integer>> entry : postWorkDataStatus.entrySet()) {
-            for (Map.Entry<String, Integer> subentry : entry.getValue().entrySet()) {
-                Log.Info("\t\t\"" +/*shortenString*/(entry.getKey())
-                        + "\" got status \""
-                        + subentry.getKey()
-                        + "\"\t\t"
-                        + subentry.getValue()
-                        + " times", Log.ANALYTICS);
+            Log.Info("\tSent messages to user", Log.ANALYTICS);
+            for (Map.Entry<User, Integer> entry : sentMessagesTo.entrySet()) {
+                Log.Info(userDataString(
+                        entry.getKey())
+                        + "\t--\t--\t sent "
+                        + entry.getValue()
+                        + " messages to user", Log.ANALYTICS);
             }
-        }
+            Log.Info("\tEdited messages for user", Log.ANALYTICS);
+            for (Map.Entry<User, Integer> entry : editedMessagesTo.entrySet()) {
+                Log.Info(userDataString(
+                        entry.getKey())
+                        + "\t--\t--\t edited "
+                        + entry.getValue()
+                        + " messages with user", Log.ANALYTICS);
+            }
+            Log.Info("\tAnswered callbacks from user", Log.ANALYTICS);
+            for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
+                Log.Info(userDataString(
+                        entry.getKey())
+                        + "\t--\t--\t answered "
+                        + entry.getValue()
+                        + " callbacks from user", Log.ANALYTICS);
+            }
+            Log.Info("\tUser visited URI", Log.ANALYTICS);
+            for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
+                for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
+                    Log.Info(userDataString(subentry.getKey())
+                            + " visited URI:'"
+                            + entry.getKey().getUri()
+                            + "'\t=\t("
+                            + shortenString(entry.getKey().getDescription())
+                            + ")\t--\t--\t was requested by user\t"
+                            + subentry.getValue()
+                            + " times", Log.ANALYTICS);
+                }
+            }
+            Log.Info("\tThe most common postWorkData status with price", Log.ANALYTICS);
+            for (Map.Entry<String, Map<String, Integer>> entry : postWorkDataStatus.entrySet()) {
+                for (Map.Entry<String, Integer> subentry : entry.getValue().entrySet()) {
+                    Log.Info("\t\t\"" +/*shortenString*/(entry.getKey())
+                            + "\" got status \""
+                            + subentry.getKey()
+                            + "\"\t\t"
+                            + subentry.getValue()
+                            + " times", Log.ANALYTICS);
+                }
+            }
 
-        postWorkDataRequested.clear();
-        postWorkDataStatus.clear();
-        callbacksAnsweredTo.clear();
-        sentMessagesTo.clear();
-        editedMessagesTo.clear();
-        answeredQueriesTo.clear();
+            postWorkDataRequested.clear();
+            postWorkDataStatus.clear();
+            callbacksAnsweredTo.clear();
+            sentMessagesTo.clear();
+            editedMessagesTo.clear();
+            answeredQueriesTo.clear();
+
+            Log.Info("Stats end --------", Log.ANALYTICS);
+        }
         lastunixtime = unixtimestamp;
-
-        Log.Info("Stats end --------", Log.ANALYTICS);
     }
 
     public void updateAnsweredInlineQueries(User toUser) {

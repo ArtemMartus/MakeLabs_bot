@@ -4,14 +4,12 @@
 
 package main.makelabs_bot.view;
 
-import main.makelabs_bot.controllers.PostWorkController;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.model.data_pojo.ContractUser;
 import main.makelabs_bot.model.data_pojo.PostWorkData;
 import main.makelabs_bot.viewmodel.ViewModel;
-import org.glassfish.grizzly.utils.Pair;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.List;
@@ -210,10 +208,10 @@ public class UserActionHandler implements MessageHandler {
 //                workData = PostWorkController.getData(commandBuilder.getValidURI(), false);
 //                viewModel.setWorkData(commandBuilder.getValidURI(), workData);
 //            }
-            if (workData == null) {
-                Log.Info("It is still null... Do PostWorkController has it??");
-                return;
-            }
+//            if (workData == null) {
+//                Log.Info("It is still null... Do PostWorkController has it??");
+//                return;
+//            }
         }
 
         keyboard.updateData(workData);
@@ -221,17 +219,17 @@ public class UserActionHandler implements MessageHandler {
 
         if (!returnPrecheck
                 && editedText == null) {
-            boolean is_not_endpoint = true;
+            boolean is_not_endpoint = !workData.isEndpoint();/*true;
             for (Pair<String, Integer> pair : workData.getParams()) {
                 String str = commandBuilder.getValidURI();
                 if (!str.equals("/"))
                     str += "/";
                 str += pair.getFirst();
-                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) { //todo imp pathExists function
+                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) {
                     is_not_endpoint = false;
                     break;
                 }
-            }
+            }*/
             if (!is_not_endpoint) {// If we just loaded last branch show the recipe for unapply contract
                 Contract contract = viewModel.getUnappliedContract(contractUser);
                 try {

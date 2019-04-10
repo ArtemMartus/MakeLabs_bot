@@ -36,8 +36,8 @@ public class Model {
         databaseManager.saveUser(user);
     }
 
-    public Integer getMessageId(Integer uid) {
-        return databaseManager.getMessageIdBy(uid);
+    public Integer getMessageId(Integer byUid) {
+        return databaseManager.getMessageId(byUid);
     }
 
     public void setMessageId(Integer uid, Integer messageId) {
@@ -45,8 +45,8 @@ public class Model {
             databaseManager.saveMessageIdForUser(uid, messageId);
     }
 
-    public PostWorkData getPostWorkData(String uri, User userRequested) {
-        PostWorkData postWorkData = databaseManager.getWorkDataBy(uri);
+    public PostWorkData getPostWorkData(String byUri, User userRequested) {
+        PostWorkData postWorkData = databaseManager.getWorkData(byUri);
         analytics.updatePostWorkDataRequested(postWorkData, userRequested);
         return postWorkData;
     }
@@ -55,29 +55,25 @@ public class Model {
         Log.Info("Updating work data " + postWorkData.getDescription(), Log.MODEL);
         databaseManager.saveWorkData(postWorkData);
     }
-    // todo complete this model
 
     public Contract getContract(Long byId) {
-        //todo get contract from database
-        return null;
+        return databaseManager.getContract(byId);
     }
 
     public PostWorkData getWorkData(Long byId) {
-        //todo get workdata by id
-        return null;
+        return databaseManager.getWorkData(byId);
     }
 
     public void saveContract(Contract contract) {
-        //todo save contract to database if not exists or update current record by searching with uid and work_id
+        databaseManager.saveContract(contract);
     }
 
     public Long getContractId(Contract contract) {
-        //todo load contract id from database
-        return null;
+        return databaseManager.getContractId(contract);
     }
 
     public void saveWorkData(PostWorkData postWorkData) {
-        //todo save work data_pojo to database or update existing record
+        databaseManager.saveWorkData(postWorkData);
     }
 
 
