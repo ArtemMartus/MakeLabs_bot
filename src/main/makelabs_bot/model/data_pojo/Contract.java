@@ -35,7 +35,9 @@ public class Contract implements Serializable {
     private String name = "";
     private String additional = "";
     private String comment = "";
-    private Integer price = 0;
+    private Integer price = 0;//todo handle price correctly
+    // it has to be representation of coins (still storing as int)
+    // or it can be a float number (database table has to be changed)
     private String status = "default status when creating custom contract";
 
     private Long applied;
@@ -82,7 +84,6 @@ gaveoff_by_uid int null default null
         this.additional = additional;
         this.comment = comment;
         this.price = price;
-//        save(); not testable
     }
 
     public Contract(Long id, long customer_uid, long work_data_id, String name, String additional, String comment,

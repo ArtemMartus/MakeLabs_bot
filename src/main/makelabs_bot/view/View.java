@@ -15,17 +15,15 @@ import java.util.Observable;
 import java.util.Observer;
 
 public class View implements Observer {
-    private ViewModel viewModel;
-    private final Analytics analytics;
 
     public View() {
-        analytics = Analytics.getInstance();
+        Analytics.getInstance();
         Log.Info("View initialized");
     }
 
     @Override
     public void update(Observable o, Object arg) {
-        viewModel = (ViewModel) o;
+        ViewModel viewModel = (ViewModel) o;
         String gotMessage = viewModel.getHandleMessage();
 
         String inlineId = viewModel.getInlineId();
@@ -59,8 +57,6 @@ public class View implements Observer {
 
             PostWorkData workData = viewModel.getWorkData(getUri, fromUser);
             if (workData == null) {
-//                workData = viewModel.r.getData(getUri, false);
-//                viewModel.setWorkData(getUri, workData);
                 Log.Info("Loaded " + getUri + " work data_pojo for " + fromUser.getUserName());
             }
 

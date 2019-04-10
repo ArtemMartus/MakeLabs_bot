@@ -353,6 +353,24 @@ public class DatabaseManager {
         }
     }
 
+    public boolean isWorkDataUriValid(String uri) {
+        if (uri == null || uri.isEmpty())
+            return false;
+        try (PreparedStatement preparedStatement = connection.
+                prepareStatement("select id from work_data where uri=? limit 1")) {
+
+            preparedStatement.setString(1, uri);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.first()) {
+                return true;
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return false;
+    }
+
     public Long getContractId(Contract contract) {
         Long contractId = null;
         try (PreparedStatement preparedStatement = connection.
@@ -480,5 +498,15 @@ public ContractUser(int id, String username, String firstname, String lastname, 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Contract> getAllUserContracts(ContractUser contractUser) {
+        return null;//todo implement
+    }
+
+    public Contract getUnapprovedContract(ContractUser contractUser) {
+        //not applied -> unapproved
+        //show not applied contract assigned by contractUser
+        return null;//todo implement
     }
 }

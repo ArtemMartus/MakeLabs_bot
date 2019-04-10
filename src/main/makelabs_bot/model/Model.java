@@ -78,21 +78,18 @@ public class Model {
 
 
     public Long getWorkDataId(PostWorkData postWorkData) {
-        //todo retrieve id from database
-        return null;
+        return databaseManager.getWorkDataId(postWorkData);
     }
 
     public void saveContractUser(ContractUser contractUser) {
-        //todo save contract user
+        databaseManager.saveUser(contractUser);
     }
 
     public List<Contract> getAllUserContracts(ContractUser contractUser) {
-        //todo get all contracts for user
-        return null;
+        return databaseManager.getAllUserContracts(contractUser);
     }
 
-    public Contract getUnappliedContract(ContractUser contractUser) {
-        //todo get unapplied contract for user
-        return null;
+    public Contract getUnapprovedContract(ContractUser contractUser) {
+        return databaseManager.getUnapprovedContract(contractUser);
     }
 }

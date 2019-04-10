@@ -87,6 +87,10 @@ public class PostWorkData {
     public void setParams(String jsonParams) {
         JSONObject rootJson = new JSONObject(jsonParams);
 //      debug printout todo make it load from json
+        //todo think about button data we need
+        // button name: String
+        // button uri it leads to: String
+        // button price if any: Int
         Log.Info(rootJson.toString());
     }
 

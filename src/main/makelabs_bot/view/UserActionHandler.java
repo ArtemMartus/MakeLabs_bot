@@ -17,7 +17,6 @@ import java.util.List;
 public class UserActionHandler implements MessageHandler {
     private final RegularMessageHandler messageHandler;
     private final CallbackMessageHandler callbackMessageHandler;
-    private final String message;
     private final ContractUser contractUser;
     private final User fromUser;
     private final InlineKeyboardManager keyboard;
@@ -42,11 +41,9 @@ public class UserActionHandler implements MessageHandler {
 
         if (messageHandler.isValid()) {
             this.commandBuilder = messageHandler.getCommandBuilder();
-            this.message = commandBuilder.getCommand();
             this.fromUser = messageHandler.getFromUser();
             this.chatId = messageHandler.getChatId();
         } else {
-            this.message = null;
             this.fromUser = null;
             this.chatId = null;
             this.commandBuilder = null;
@@ -54,7 +51,6 @@ public class UserActionHandler implements MessageHandler {
 
         if (keyboard.isValid()) {
             this.workData = keyboard.getWorkData();
-//            keyboard.handle();
         } else {
             this.workData = null;
         }
@@ -108,7 +104,7 @@ public class UserActionHandler implements MessageHandler {
             // or made in 1 day with fines quality with 4 times price
 
             //TODO start planning Jobs bot
-            //we can handle new jobs by asking employees for pdf task details and writing our own prices. It would be the safest way
+            // we can handle new jobs by asking employees for pdf task details and writing our own prices. It would be the safest way
             case "Мои заказы": {
                 List<Contract> contractList = viewModel.getContracts(contractUser);
                 if (contractList.size() > 0) {
@@ -136,28 +132,17 @@ public class UserActionHandler implements MessageHandler {
             case "Подтвердить": {
                 {
                     Contract contract = viewModel.getUnappliedContract(contractUser);
-//                    if (contract.getComment().isEmpty()) {
-//                        contractUser.setWaitingForComment(true);
-//                        Send("Введите комментарий к заказу ( к примеру вариант задания )");
-//                        return true;
-//                    } else {
-
-                    // So, we finally have comment following order - show check out page and set status to applied
-                    // Then ask for payment and check when payed
                     contract.setUpAllIncluding(workData);
-                    //contract.writeTo(contractUser.getId() + "_applied/" + contract.getHash());
                     viewModel.saveContract(contract);
                     Send(contract.toString());
                     Send("Оплатите заказ переводом в " + contract.getPrice() + "₴ на карту монобанка 5375411401989640,");
-                    getHome(); // TODO go checkout instead of home
-//                    }
+                    getHome();
+
                 }
-                break; // has it be return true?
+                break;
             }
             default: {
 
-//                Log.Info("Got unhandled command: " + command);
-                //This is most possibly checkout form
                 workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
 
                 if (workData.hasChild(commandBuilder.getCommand())) {
@@ -196,22 +181,9 @@ public class UserActionHandler implements MessageHandler {
         contractUser.setStateUri(commandBuilder.getValidURI());
         viewModel.saveContractUser(contractUser);
 
-        //debug only
-//        workData = null;
-        //debug end
-
         if (workData == null) {
             Log.Info("Some strange shit makes data_pojo set to null...");
             workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
-//            if (workData == null) {
-//                Log.Info("Oh, never mind. Stupid on-demand loading 'dataset' didn't have it");
-//                workData = PostWorkController.getData(commandBuilder.getValidURI(), false);
-//                viewModel.setWorkData(commandBuilder.getValidURI(), workData);
-//            }
-//            if (workData == null) {
-//                Log.Info("It is still null... Do PostWorkController has it??");
-//                return;
-//            }
         }
 
         keyboard.updateData(workData);
@@ -219,18 +191,9 @@ public class UserActionHandler implements MessageHandler {
 
         if (!returnPrecheck
                 && editedText == null) {
-            boolean is_not_endpoint = !workData.isEndpoint();/*true;
-            for (Pair<String, Integer> pair : workData.getParams()) {
-                String str = commandBuilder.getValidURI();
-                if (!str.equals("/"))
-                    str += "/";
-                str += pair.getFirst();
-                if (pair.getSecond() > 0 && !PostWorkController.pathExists(str, false)) {
-                    is_not_endpoint = false;
-                    break;
-                }
-            }*/
-            if (!is_not_endpoint) {// If we just loaded last branch show the recipe for unapply contract
+            boolean is_not_endpoint = !workData.isEndpoint();
+
+            if (!is_not_endpoint) {// If we just loaded last branch show the recipe for un applied contract
                 Contract contract = viewModel.getUnappliedContract(contractUser);
                 try {
                     contract.setUpAllIncluding(workData);

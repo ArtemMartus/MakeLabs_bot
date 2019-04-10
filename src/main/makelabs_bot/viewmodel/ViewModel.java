@@ -205,7 +205,7 @@ public class ViewModel extends Observable {
     }
 
     public Contract getUnappliedContract(ContractUser contractUser) {
-        return model.getUnappliedContract(contractUser);
+        return model.getUnapprovedContract(contractUser);
     }
 
     public void saveContract(Contract contract) {
