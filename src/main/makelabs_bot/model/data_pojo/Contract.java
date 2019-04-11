@@ -31,7 +31,7 @@ public class Contract implements Serializable {
 
     private Long id;
     private long customer_uid;
-    private long work_data_id = -1L;
+    private long work_data_id;
     private String name = "";
     private String additional = "";
     private String comment = "";

@@ -50,6 +50,18 @@ orders_gaveoff int not null default 0,
 payments_accepted int not null default 0
      */
 
+    public ContractUser(long id, String username, String firstname) {
+        this.id = id;// we have to manually set id to telegram's one
+        this.username = username;
+        this.firstname = firstname;
+    }
+
+    public ContractUser(long id, String username, String firstname, String lastname) {
+        this.id = id;// we have to manually set id to telegram's one
+        this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
+    }
 
     public ContractUser(long id, String username, String firstname, String lastname, int messageId) {
         this.id = id;// we have to manually set id to telegram's one

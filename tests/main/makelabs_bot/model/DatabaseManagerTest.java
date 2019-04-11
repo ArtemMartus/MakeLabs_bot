@@ -48,7 +48,7 @@ class DatabaseManagerTest {
     @Test
     void saveUser() {
         try {
-            ContractUser contractUser = new ContractUser(13372290L, "nigga", "jay", "z", 134);
+            ContractUser contractUser = new ContractUser(13372290L, "nigga", "jay");
             databaseManager.saveUser(contractUser);
             ContractUser get = databaseManager.getUserById(13372290L);
             assertEquals(get, contractUser);
@@ -74,7 +74,7 @@ class DatabaseManagerTest {
     @Test
     void saveMessageIdForUser() {
         try {
-            ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z", 134);
+            ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z");
             databaseManager.saveUser(contractUser);
             databaseManager.saveMessageIdForUser(contractUser.getId(), 431);
             Integer messageId = databaseManager.getMessageId(contractUser.getId());
@@ -103,7 +103,7 @@ class DatabaseManagerTest {
     @Test
     void GetAllUserContracts() {
         try {
-            ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z", 134);
+            ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z");
             databaseManager.saveUser(contractUser);
             Contract contract = new Contract(13372290, 5L, "test contract",
                     "#function1##function2#", "comment", 333.0f);
