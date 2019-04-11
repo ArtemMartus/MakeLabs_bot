@@ -110,17 +110,15 @@ public class ViewModel extends Observable {
             Log.Info("userId == 0 Invalid update", Log.VERBOSE);
             return null;
         }
-        ContractUser usr = model.getUser(fromUser.getId());
+        ContractUser usr = model.getUser(fromUser.getId().longValue());
 
         if (usr == null) {
-            messageId = getMessageIdForUser(fromUser.getId());
+            messageId = getMessageIdForUser(fromUser.getId().longValue());
             usr = new ContractUser(fromUser.getId(),
                     username, firstname, lastname, messageId);
             model.saveContractUser(usr);
         } else {
             messageId = contractUser.getMessageId();
-            if (messageId == null)
-                messageId = getMessageIdForUser(fromUser.getId());
         }
         return usr;
     }
@@ -140,7 +138,7 @@ public class ViewModel extends Observable {
         return messageId;
     }
 
-    public Integer getMessageIdForUser(Integer uid) {
+    public Integer getMessageIdForUser(Long uid) {
         if (uid == null) {
             return null;
         }

@@ -35,7 +35,7 @@ public class Contract implements Serializable {
     private String name = "";
     private String additional = "";
     private String comment = "";
-    private Integer price = 0;//todo handle price correctly
+    private Integer price = 500;//todo handle price correctly
     // it has to be representation of coins (still storing as int)
     // or it can be a float number (database table has to be changed)
     private String status = "default status when creating custom contract";
@@ -274,7 +274,7 @@ gaveoff_by_uid int null default null
         return id;
     }
 
-    public long getCustomer_uid() {
+    public long getCustomerId() {
         return customer_uid;
     }
 
@@ -382,7 +382,7 @@ gaveoff_by_uid int null default null
         if (this == o) return true;
         if (!(o instanceof Contract)) return false;
         Contract contract = (Contract) o;
-        return getCustomer_uid() == contract.getCustomer_uid() &&
+        return getCustomerId() == contract.getCustomerId() &&
                 work_data_id == contract.work_data_id &&
                 getName().equals(contract.getName()) &&
                 getAdditional().equals(contract.getAdditional()) &&
@@ -392,6 +392,10 @@ gaveoff_by_uid int null default null
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCustomer_uid(), work_data_id, getName(), getAdditional(), getPrice(), getStatus());
+        return Objects.hash(getCustomerId(), work_data_id, getName(), getAdditional(), getPrice(), getStatus());
+    }
+
+    public void setId(Long contractId) {
+        id = contractId;
     }
 }

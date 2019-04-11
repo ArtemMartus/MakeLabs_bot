@@ -4,6 +4,7 @@
 
 package main.makelabs_bot.model;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.model.data_pojo.ContractUser;
@@ -16,14 +17,19 @@ import java.util.List;
 public class DatabaseManager {
     private static final String databaseUri =
             "jdbc:mysql://makelabsdatabase.cxkbfyhmxknq.eu-central-1.rds.amazonaws.com:3306/";
-    public static String databaseName = "myDatabase";
-    private static final String user = "makelabsRoot";
-    private static final String password = "CctGse2SyrgbXke";
+    public static String databaseName;
+    //todo change aws mysql name and password
     private static DatabaseManager databaseManager;
     private final Connection connection;
     private final Statement statement;
 
     private DatabaseManager() {
+        Dotenv dotenv = Dotenv.load();
+        String password = dotenv.get("DB_PASSWORD");
+        String user = dotenv.get("DB_USER");
+        if (databaseName == null || databaseName.isEmpty())
+            databaseName = dotenv.get("DB_NAME");
+
         Connection tempConnection = null;
         Statement tempStatement = null;
         try {
@@ -64,6 +70,7 @@ public class DatabaseManager {
         try {
             ResultSet resultSet = statement.executeQuery("select * from contracts where applied is null");
             if (resultSet.first()) {
+                Analytics.getInstance().updateDatabaseSelects(1);
                 do {
                     contracts.add(parseContractFromResultSet(resultSet));
                 } while (resultSet.next());
@@ -75,7 +82,7 @@ public class DatabaseManager {
         return contracts;
     }
 
-    public ContractUser getUserById(Integer uid) {
+    public ContractUser getUserById(Long uid) {
         ContractUser user = null;
         if (uid == null)
             return null;
@@ -86,6 +93,7 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 user = parseContractUserFromResultSet(resultSet);
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -94,7 +102,7 @@ public class DatabaseManager {
         return user;
     }
 
-    public void saveUser(ContractUser user) {
+    public void saveUser(ContractUser user) throws SQLException {
         ContractUser tryToGet = getUserById(user.getId());
         String query;
         if (tryToGet == null)
@@ -105,6 +113,11 @@ public class DatabaseManager {
             query = "update users set username=?,firstname=?,lastname=?,usertype=?,state_uri=?,messageId=?," +
                     "spent_money=?,earned_money=?,orders_ordered=?,orders_made=?,orders_reviewed=?,orders_gaveoff=?," +
                     "payments_accepted=? where id=?;";
+
+        PostWorkData workData = getWorkData(user.getStateUri());
+        if (workData == null)
+            throw new SQLException("Cannot save user with invalid state uri");
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, user.getUsername());
@@ -123,26 +136,30 @@ public class DatabaseManager {
             preparedStatement.setInt(11, user.getOrdersReviewed());
             preparedStatement.setInt(12, user.getOrdersGaveOff());
             preparedStatement.setInt(13, user.getPaymentsAccepted());
-            preparedStatement.setInt(14, user.getId());
+            preparedStatement.setLong(14, user.getId());
 
             int rows = preparedStatement.executeUpdate();
-            //todo analytics make count of updates/inserts
+            if (tryToGet == null)
+                Analytics.getInstance().updateDatabaseInserts(rows);
+            else
+                Analytics.getInstance().updateDatabaseUpdates(rows);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    public Integer getMessageId(Integer uid) {
+    public Integer getMessageId(Long uid) {
         Integer messageId = null;
         if (uid == null)
             return null;
         try (PreparedStatement preparedStatement = connection.
                 prepareStatement("select messageId from users where id=? limit 1")) {
 
-            preparedStatement.setInt(1, uid);
+            preparedStatement.setLong(1, uid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 messageId = resultSet.getInt("messageId");
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -151,7 +168,7 @@ public class DatabaseManager {
         return messageId;
     }
 
-    public void saveMessageIdForUser(Integer uid, Integer messageId) {
+    public void saveMessageIdForUser(Long uid, Integer messageId) {
         if (uid == null || messageId == null)
             return;
 
@@ -159,10 +176,10 @@ public class DatabaseManager {
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setInt(1, messageId);
-            preparedStatement.setInt(2, uid);
+            preparedStatement.setLong(2, uid);
             int rows = preparedStatement.executeUpdate();
 
-            //todo analytics make count of updates/inserts
+            Analytics.getInstance().updateDatabaseUpdates(rows);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -179,6 +196,7 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 workData = parseWorkDataFromResultSet(resultSet);
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -187,17 +205,21 @@ public class DatabaseManager {
         return workData;
     }
 
-    public void saveWorkData(PostWorkData postWorkData) {
+    public void saveWorkData(PostWorkData postWorkData) throws SQLException {
         if (postWorkData == null || postWorkData.getUri() == null || postWorkData.getUri().isEmpty())
             return;
 
         PostWorkData tryToGet = getWorkData(postWorkData.getId());
         String query;
-        if (tryToGet == null)
+        if (tryToGet == null) {
+            ContractUser createdBy = getUserById(postWorkData.getCreatedByUid());
+            if (createdBy == null)
+                throw new SQLException("Cannot save work data with invalid creator's id");
             query = "insert into work_data(params_json,description,created_by_uid,uri,has_child) " +
                     "values(?,?,?,?,?);";
-        else
+        } else
             query = "update work_data set params_json=?, description=?,uri=?,has_child=? where id=?";
+
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             if (tryToGet == null) {
@@ -216,7 +238,10 @@ public class DatabaseManager {
             }
             int rows = preparedStatement.executeUpdate();
 
-            //todo analytics make count of updates/inserts
+            if (tryToGet == null)
+                Analytics.getInstance().updateDatabaseInserts(rows);
+            else
+                Analytics.getInstance().updateDatabaseUpdates(rows);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -233,6 +258,7 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 contract = parseContractFromResultSet(resultSet);
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -252,6 +278,7 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 id = resultSet.getLong("id");
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -271,6 +298,7 @@ public class DatabaseManager {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 workData = parseWorkDataFromResultSet(resultSet);
+                Analytics.getInstance().updateDatabaseSelects(1);
             }
 
         } catch (SQLException ex) {
@@ -279,7 +307,7 @@ public class DatabaseManager {
         return workData;
     }
 
-    public void saveContract(Contract contract) {
+    public void saveContract(Contract contract) throws SQLException {
         Contract tryToGet = getContract(contract.getId());
         String query;
         if (tryToGet == null)
@@ -294,8 +322,16 @@ public class DatabaseManager {
                     "applied=?,paid=?,payment_checked_by_uid=?,taken_by_uid=?,taken=?,reviewed_by_uid=?," +
                     "gaveoff=?,gaveoff_by_uid=? where id=?";
 
+        PostWorkData workData = getWorkData(contract.getWorkDataId());
+        ContractUser user = getUserById(contract.getCustomerId());
+
+        if (workData == null)
+            throw new SQLException("Cannot save contract with invalid workData id");
+        if (user == null)
+            throw new SQLException("Cannot save contract with invalid user id");
+
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setLong(1, contract.getCustomer_uid());
+            preparedStatement.setLong(1, contract.getCustomerId());
             preparedStatement.setString(2, contract.getName());
             preparedStatement.setString(3, contract.getAdditional());
             preparedStatement.setString(4, contract.getComment());
@@ -347,7 +383,10 @@ public class DatabaseManager {
 
             int rows = preparedStatement.executeUpdate();
 
-            //todo analytics make count of updates/inserts
+            if (tryToGet == null)
+                Analytics.getInstance().updateDatabaseInserts(rows);
+            else
+                Analytics.getInstance().updateDatabaseUpdates(rows);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -362,6 +401,7 @@ public class DatabaseManager {
             preparedStatement.setString(1, uri);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
+                Analytics.getInstance().updateDatabaseSelects(1);
                 return true;
             }
 
@@ -377,7 +417,7 @@ public class DatabaseManager {
                 prepareStatement("select id from contracts where customer_uid=? and name=? " +
                         "and work_data_id=? and price=? and status=? and additional=? limit 1")) {
             //todo make the search through 'created' timestamp
-            preparedStatement.setLong(1, contract.getCustomer_uid());
+            preparedStatement.setLong(1, contract.getCustomerId());
             preparedStatement.setString(2, contract.getName());
             preparedStatement.setLong(3, contract.getWorkDataId());
             preparedStatement.setInt(4, contract.getPrice());
@@ -385,8 +425,10 @@ public class DatabaseManager {
             preparedStatement.setString(6, contract.getAdditional());
 
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.first())
+            if (resultSet.first()) {
                 contractId = resultSet.getLong("id");
+                Analytics.getInstance().updateDatabaseSelects(1);
+            }
 
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -469,20 +511,23 @@ public ContractUser(int id, String username, String firstname, String lastname, 
             return;
         try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from contracts where id=?")) {
             preparedStatement.setLong(1, contractId);
-            int rows = preparedStatement.executeUpdate();
-            //todo make analytics of rows affected
+            preparedStatement.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void removeUser(Integer id) {
+    public void removeUser(Long id) {
         if (id == null)
             return;
-        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from users where id=?")) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from contracts where customer_uid=?")) {
             preparedStatement.setLong(1, id);
-            int rows = preparedStatement.executeUpdate();
-            //todo make analytics of rows affected
+            preparedStatement.executeUpdate();
+            PreparedStatement preparedStatement1 = connection.prepareStatement("DELETE from users where id=?");
+            preparedStatement1.setLong(1, id);
+            preparedStatement1.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -491,22 +536,60 @@ public ContractUser(int id, String username, String firstname, String lastname, 
     public void removeWorkData(String uri) {
         if (uri == null || uri.isEmpty())
             return;
+
+        PostWorkData data = getWorkData(uri);
+        if (data != null && data.getId() != null) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from contracts where work_data_id=?")) {
+                preparedStatement.setLong(1, data.getId());
+                preparedStatement.executeUpdate();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from work_data where uri=?")) {
             preparedStatement.setString(1, uri);
-            int rows = preparedStatement.executeUpdate();
-            //todo make analytics of rows affected
+            preparedStatement.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public List<Contract> getAllUserContracts(ContractUser contractUser) {
-        return null;//todo implement
+        List<Contract> contracts = new LinkedList<>();
+        try (PreparedStatement preparedStatement = connection.prepareStatement("select * from contracts where customer_uid=?")) {
+            preparedStatement.setLong(1, contractUser.getId());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.first()) {
+                Analytics.getInstance().updateDatabaseSelects(1);
+                do {
+                    contracts.add(parseContractFromResultSet(resultSet));
+                } while (resultSet.next());
+            }
+            resultSet.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return contracts;
     }
 
     public Contract getUnapprovedContract(ContractUser contractUser) {
-        //not applied -> unapproved
-        //show not applied contract assigned by contractUser
-        return null;//todo implement
+        try (PreparedStatement preparedStatement = connection.prepareStatement("select * from contracts where customer_uid=? and applied is null")) {
+            preparedStatement.setLong(1, contractUser.getId());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.first()) {
+                resultSet.close();
+                Analytics.getInstance().updateDatabaseSelects(1);
+                return parseContractFromResultSet(resultSet);
+            }
+            resultSet.close();
+            Contract freshNew = new Contract(contractUser.getId());
+//            saveContract(freshNew);
+            return freshNew;//getUnapprovedContract(contractUser);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

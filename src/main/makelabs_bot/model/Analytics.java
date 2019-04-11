@@ -25,7 +25,9 @@ public class Analytics {
     private Map<User, Integer> editedMessagesTo = new HashMap<>();
     private Map<User, Integer> callbacksAnsweredTo = new HashMap<>();
     private Map<PostWorkData, Map<User, Integer>> postWorkDataRequested = new HashMap<>();
-    private Map<String, Map<String, Integer>> postWorkDataStatus = new HashMap<>();
+    private int databaseInserts = 0;
+    private int databseUpdates = 0;
+    private int databaseSelects = 0;
 
 
     public static Analytics getInstance() {
@@ -63,7 +65,6 @@ public class Analytics {
         final int hour = minute * 60;
 
         Long current = Calendar.getInstance().getTimeInMillis() / 1000L;
-        //System.out.println("Check time \n\t"+current+"\n\t"+lastunixtime);
         if (current - lastunixtime > hour * 3) {
             saveCurrent(current);
         }
@@ -87,7 +88,6 @@ public class Analytics {
     public void saveCurrent(Long unixtimestamp) {
 
         if (postWorkDataRequested.size() > 0 ||
-                postWorkDataStatus.size() > 0 ||
                 callbacksAnsweredTo.size() > 0 ||
                 sentMessagesTo.size() > 0 ||
                 editedMessagesTo.size() > 0 ||
@@ -100,72 +100,73 @@ public class Analytics {
                     + getTime(unixtimestamp)
                     + "]", Log.ANALYTICS);
 
-            Log.Info("\tAnswered user's queries", Log.ANALYTICS);
-            for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
-                Log.Info(userDataString(
-                        entry.getKey())
-                        + "\t--\t--\t answered his queries "
-                        + entry.getValue()
-                        + " times", Log.ANALYTICS);
-            }
-            Log.Info("\tSent messages to user", Log.ANALYTICS);
-            for (Map.Entry<User, Integer> entry : sentMessagesTo.entrySet()) {
-                Log.Info(userDataString(
-                        entry.getKey())
-                        + "\t--\t--\t sent "
-                        + entry.getValue()
-                        + " messages to user", Log.ANALYTICS);
-            }
-            Log.Info("\tEdited messages for user", Log.ANALYTICS);
-            for (Map.Entry<User, Integer> entry : editedMessagesTo.entrySet()) {
-                Log.Info(userDataString(
-                        entry.getKey())
-                        + "\t--\t--\t edited "
-                        + entry.getValue()
-                        + " messages with user", Log.ANALYTICS);
-            }
-            Log.Info("\tAnswered callbacks from user", Log.ANALYTICS);
-            for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
-                Log.Info(userDataString(
-                        entry.getKey())
-                        + "\t--\t--\t answered "
-                        + entry.getValue()
-                        + " callbacks from user", Log.ANALYTICS);
-            }
-            Log.Info("\tUser visited URI", Log.ANALYTICS);
-            for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
-                for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
-                    Log.Info(userDataString(subentry.getKey())
-                            + " visited URI:'"
-                            + entry.getKey().getUri()
-                            + "'\t=\t("
-                            + shortenString(entry.getKey().getDescription())
-                            + ")\t--\t--\t was requested by user\t"
-                            + subentry.getValue()
+            if (answeredQueriesTo.size() > 0) {
+                Log.Info("\tAnswered user's queries", Log.ANALYTICS);
+                for (Map.Entry<User, Integer> entry : answeredQueriesTo.entrySet()) {
+                    Log.Info(userDataString(
+                            entry.getKey())
+                            + "\t--\t--\t answered his queries "
+                            + entry.getValue()
                             + " times", Log.ANALYTICS);
                 }
             }
-            Log.Info("\tThe most common postWorkData status with price", Log.ANALYTICS);
-            for (Map.Entry<String, Map<String, Integer>> entry : postWorkDataStatus.entrySet()) {
-                for (Map.Entry<String, Integer> subentry : entry.getValue().entrySet()) {
-                    Log.Info("\t\t\"" +/*shortenString*/(entry.getKey())
-                            + "\" got status \""
-                            + subentry.getKey()
-                            + "\"\t\t"
-                            + subentry.getValue()
-                            + " times", Log.ANALYTICS);
+            if (sentMessagesTo.size() > 0) {
+                Log.Info("\tSent messages to user", Log.ANALYTICS);
+                for (Map.Entry<User, Integer> entry : sentMessagesTo.entrySet()) {
+                    Log.Info(userDataString(
+                            entry.getKey())
+                            + "\t--\t--\t sent "
+                            + entry.getValue()
+                            + " messages to user", Log.ANALYTICS);
+                }
+            }
+            if (editedMessagesTo.size() > 0) {
+                Log.Info("\tEdited messages for user", Log.ANALYTICS);
+                for (Map.Entry<User, Integer> entry : editedMessagesTo.entrySet()) {
+                    Log.Info(userDataString(
+                            entry.getKey())
+                            + "\t--\t--\t edited "
+                            + entry.getValue()
+                            + " messages with user", Log.ANALYTICS);
+                }
+            }
+            if (callbacksAnsweredTo.size() > 0) {
+                Log.Info("\tAnswered callbacks from user", Log.ANALYTICS);
+                for (Map.Entry<User, Integer> entry : callbacksAnsweredTo.entrySet()) {
+                    Log.Info(userDataString(
+                            entry.getKey())
+                            + "\t--\t--\t answered "
+                            + entry.getValue()
+                            + " callbacks from user", Log.ANALYTICS);
+                }
+            }
+            if (postWorkDataRequested.size() > 0) {
+                Log.Info("\tUser visited URI", Log.ANALYTICS);
+                for (Map.Entry<PostWorkData, Map<User, Integer>> entry : postWorkDataRequested.entrySet()) {
+                    for (Map.Entry<User, Integer> subentry : entry.getValue().entrySet()) {
+                        Log.Info(userDataString(subentry.getKey())
+                                + " visited URI:'"
+                                + entry.getKey().getUri()
+                                + "'\t=\t("
+                                + shortenString(entry.getKey().getDescription())
+                                + ")\t--\t--\t was requested by user\t"
+                                + subentry.getValue()
+                                + " times", Log.ANALYTICS);
+                    }
                 }
             }
 
             postWorkDataRequested.clear();
-            postWorkDataStatus.clear();
             callbacksAnsweredTo.clear();
             sentMessagesTo.clear();
             editedMessagesTo.clear();
             answeredQueriesTo.clear();
 
             Log.Info("Stats end --------", Log.ANALYTICS);
-        }
+        } else
+            Log.Info("Nullifying counters... " + getTime(lastunixtime) + " <-> " + getTime(unixtimestamp), Log.ANALYTICS);
+
+        databseUpdates = databaseInserts = databaseSelects = 0;
         lastunixtime = unixtimestamp;
     }
 
@@ -238,25 +239,18 @@ public class Analytics {
                 + " messages to him already", Log.EVERYTHING);
     }
 
-//    public void updatePostWorkDataStatus(String dataURI, String statusPlusPrice) {
-//        if (dataURI == null || dataURI.isEmpty()) return;
-//        Integer times = 1;
-//        Map<String, Integer> dataPairRequested = postWorkDataStatus.get(dataURI);
-//        if (dataPairRequested == null) {
-//            dataPairRequested = new HashMap<>();
-//            dataPairRequested.put(statusPlusPrice, times);
-//        } else {
-//            times = dataPairRequested.get(statusPlusPrice);
-//            times = times == null ? 1 : ++times;
-//            dataPairRequested.put(statusPlusPrice, times);
-//        }
-//
-//        postWorkDataStatus.put(dataURI, dataPairRequested);
-//
-//        Log.Info(shortenString(dataURI)
-//                + " status plus price -  "
-//                + statusPlusPrice
-//                + " - "
-//                + times + " items", Log.EVERYTHING);
-//    }
+    public void updateDatabaseSelects(int i) {
+        databaseSelects += i;
+        Log.Info("Current database selects = " + databaseSelects, Log.ANALYTICS);
+    }
+
+    public void updateDatabaseInserts(int rows) {
+        databaseInserts += rows;
+        Log.Info("Current database inserts = " + databaseInserts, Log.ANALYTICS);
+    }
+
+    public void updateDatabaseUpdates(int rows) {
+        databseUpdates += rows;
+        Log.Info("Current database updates = " + databseUpdates, Log.ANALYTICS);
+    }
 }

@@ -10,6 +10,7 @@ import main.makelabs_bot.model.data_pojo.ContractUser;
 import main.makelabs_bot.model.data_pojo.PostWorkData;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class Model {
@@ -26,21 +27,25 @@ public class Model {
         return databaseManager.getAllAppliedNotPaidContracts();
     }
 
-    public ContractUser getUser(Integer id) {
+    public ContractUser getUser(Long id) {
         return databaseManager.getUserById(id);
     }
 
     public void setUser(ContractUser user) {
         if (user == null)
             return;
-        databaseManager.saveUser(user);
+        try {
+            databaseManager.saveUser(user);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Integer getMessageId(Integer byUid) {
+    public Integer getMessageId(Long byUid) {
         return databaseManager.getMessageId(byUid);
     }
 
-    public void setMessageId(Integer uid, Integer messageId) {
+    public void setMessageId(Long uid, Integer messageId) {
         if (uid != null)
             databaseManager.saveMessageIdForUser(uid, messageId);
     }
@@ -52,8 +57,12 @@ public class Model {
     }
 
     public void setPostWorkData(PostWorkData postWorkData) {
-        Log.Info("Updating work data " + postWorkData.getDescription(), Log.MODEL);
-        databaseManager.saveWorkData(postWorkData);
+        try {
+            databaseManager.saveWorkData(postWorkData);
+            Log.Info("Updating work data " + postWorkData.getDescription(), Log.MODEL);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public Contract getContract(Long byId) {
@@ -65,7 +74,11 @@ public class Model {
     }
 
     public void saveContract(Contract contract) {
-        databaseManager.saveContract(contract);
+        try {
+            databaseManager.saveContract(contract);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public Long getContractId(Contract contract) {
@@ -73,7 +86,11 @@ public class Model {
     }
 
     public void saveWorkData(PostWorkData postWorkData) {
-        databaseManager.saveWorkData(postWorkData);
+        try {
+            databaseManager.saveWorkData(postWorkData);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -82,7 +99,11 @@ public class Model {
     }
 
     public void saveContractUser(ContractUser contractUser) {
-        databaseManager.saveUser(contractUser);
+        try {
+            databaseManager.saveUser(contractUser);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<Contract> getAllUserContracts(ContractUser contractUser) {

@@ -15,7 +15,7 @@ public class ContractUser implements Serializable {
     public static final int ADMIN = 3;
     public static final int CREATOR = 0xff;
 
-    private int id;
+    private long id;
     private String username;
     private String firstname;
     private String lastname;//can be null
@@ -51,7 +51,7 @@ payments_accepted int not null default 0
      */
 
 
-    public ContractUser(int id, String username, String firstname, String lastname, int messageId) {
+    public ContractUser(long id, String username, String firstname, String lastname, int messageId) {
         this.id = id;// we have to manually set id to telegram's one
         this.username = username;
         this.firstname = firstname;
@@ -59,7 +59,7 @@ payments_accepted int not null default 0
         this.messageId = messageId;
     }
 
-    public ContractUser(int id, String username, String firstname, String lastname, int userType, String stateUri,
+    public ContractUser(long id, String username, String firstname, String lastname, int userType, String stateUri,
                         int messageId, int spentMoney, int earnedMoney, int ordersOrdered,
                         int ordersMade, int ordersReviewed, int ordersGaveOff, int paymentsAccepted) {
         this.id = id;
@@ -100,7 +100,7 @@ payments_accepted int not null default 0
         return stateUri;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
