@@ -15,10 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class DatabaseManager {
-    private static final String databaseUri =
-            "jdbc:mysql://makelabsdatabase.cxkbfyhmxknq.eu-central-1.rds.amazonaws.com:3306/";
-    public static String databaseName;
-    //todo change aws mysql name and password
+    static String databaseName;
     private static DatabaseManager databaseManager;
     private final Connection connection;
     private final Statement statement;
@@ -27,6 +24,8 @@ public class DatabaseManager {
         Dotenv dotenv = Dotenv.load();
         String password = dotenv.get("DB_PASSWORD");
         String user = dotenv.get("DB_USER");
+        String databaseUri = dotenv.get("DB_URI");//todo change mysql server uri
+
         if (databaseName == null || databaseName.isEmpty())
             databaseName = dotenv.get("DB_NAME");
 
