@@ -4,12 +4,12 @@
 
 package main.makelabs_bot.model.data_pojo;
 
-import main.makelabs_bot.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -35,49 +35,28 @@ public class Contract implements Serializable {
     private String name = "";
     private String additional = "";
     private String comment = "";
-    private Integer price = 500;//todo handle price correctly
+    private Float price = 500.0f;// decimal(6,2) e.g. 1234.56
     // it has to be representation of coins (still storing as int)
     // or it can be a float number (database table has to be changed)
-    private String status = "default status when creating custom contract";
+    private String status = FRESH_NEW;//"default status when creating custom contract";
 
-    private Long applied;
-    private Long paid;
+    private Timestamp applied;
+    private Timestamp paid;
+    private Timestamp taken;
+    private Timestamp gaveOff;
+    private Timestamp created;
+
     private Long paymentCheckedByUID;
     private Long takenByUID;
-
-    private Long taken;
     private Long reviewByUID;
-    private Long gaveOff;
     private Long gaveOffByUID;
-
-    /*
-id INT PRIMARY KEY AUTO_INCREMENT unique,
-customer_uid int not null,
-work_data_id int not null,
-name TEXT NOT NULL,
-
-additional TEXT not null,
-comment text null,
-price int not null CHECK(price >= 150),
-status text not null,
-
-applied datetime not null,
-paid datetime null default null,
-payment_checked_by_uid int null default null,
-taken_by_uid int null default null,
-
-taken datetime null default null,
-reviewed_by_uid int null default null,
-gaveoff datetime null default null,
-gaveoff_by_uid int null default null
-     */
 
     public Contract(long customer_uid) {
         this.customer_uid = customer_uid;
         setStatus(FRESH_NEW);
     }
 
-    public Contract(long customer_uid, long work_data_id, String name, String additional, String comment, Integer price) {
+    public Contract(long customer_uid, long work_data_id, String name, String additional, String comment, Float price) {
         this.customer_uid = customer_uid;
         this.work_data_id = work_data_id;
         this.name = name;
@@ -87,8 +66,8 @@ gaveoff_by_uid int null default null
     }
 
     public Contract(Long id, long customer_uid, long work_data_id, String name, String additional, String comment,
-                    Integer price, String status, Timestamp applied, Timestamp paid, Long paymentCheckedByUID, Long takenByUID,
-                    Timestamp taken, Long reviewByUID, Timestamp gaveOff, Long gaveOffByUID) {
+                    Float price, String status, Timestamp applied, Timestamp paid, Long paymentCheckedByUID, Long takenByUID,
+                    Timestamp taken, Long reviewByUID, Timestamp gaveOff, Long gaveOffByUID, Timestamp created) {
         this.id = id;
         this.customer_uid = customer_uid;
         this.work_data_id = work_data_id;
@@ -97,18 +76,15 @@ gaveoff_by_uid int null default null
         this.comment = comment;
         this.price = price;
         this.status = status;
-        if (applied != null)
-            this.applied = applied.getTime() / 1000;
-        if (paid != null)
-            this.paid = paid.getTime() / 1000;
+        this.applied = applied;
+        this.paid = paid;
         this.paymentCheckedByUID = paymentCheckedByUID;
         this.takenByUID = takenByUID;
-        if (taken != null)
-            this.taken = taken.getTime() / 1000;
+        this.taken = taken;
         this.reviewByUID = reviewByUID;
-        if (gaveOff != null)
-            this.gaveOff = gaveOff.getTime() / 1000;
+        this.gaveOff = gaveOff;
         this.gaveOffByUID = gaveOffByUID;
+        this.created = created;
     }
 
     public void setUpAllIncluding(PostWorkData data) throws Exception {
@@ -119,32 +95,28 @@ gaveoff_by_uid int null default null
         this.additional = "";
         this.comment = "";
         this.name = data.getDescription();
-        this.price = 0;
+        this.price = 150.0f;
     }
 
-    private Long unixNow() {
-        return System.currentTimeMillis() / 1000L;
-    }
-
-    public void save() {
+//    public void save() {
 //        we can't insert contract id into database as it's being generated automatically
-        Analytics.getInstance().getMakeLabs_bot().model.saveContract(this);
-        if ((id == null || id < 0) && applied > 0)
-            id = Analytics.getInstance().getMakeLabs_bot().model.getContractId(this);
-    }
+//        Analytics.getInstance().getMakeLabs_bot().model.saveContract(this);
+//        if ((id == null || id < 0) && applied != null)
+//            id = Analytics.getInstance().getMakeLabs_bot().model.getContractId(this);
+//    }
 
     public void apply() {
-        applied = unixNow();
+        applied = new Timestamp(new Date().getTime());
         setStatus(APPLIED);
     }
 
     public void paid() {
-        paid = unixNow();
+        paid = new Timestamp(new Date().getTime());
         setStatus(PURCHASED);
     }
 
     public void giveOff() {
-        gaveOff = unixNow();
+        gaveOff = new Timestamp(new Date().getTime());
         setStatus(GIVEOFF);
     }
 
@@ -195,7 +167,7 @@ gaveoff_by_uid int null default null
         return additional.contains("#" + ptr + "#");
     }
 
-    public boolean toogle(String ptr) {
+    public boolean toggle(String ptr) {
         if (isSet(ptr)) {
             additional = additional.replace("#" + ptr + "#", "");
             return false;
@@ -222,40 +194,42 @@ gaveoff_by_uid int null default null
         builder
                 .append("Заказ ")
                 .append(id)
+                .append(" создан ")
+                .append(created)
                 .append("\tПользователь ")
                 .append(customer_uid)
                 .append("\tДанные о работе ")
                 .append(work_data_id)
                 .append("\t")
                 .append(name)
-                .append("\nВключено:")
-                .append("\n");
+                .append(" Включено:")
+                .append(" ");
         for (String str : getStuffSet()) {
-            builder.append(" - - - ").append(str).append("\n");
+            builder.append(" - - - ").append(str).append(" ");
         }
         builder
                 .append("Итоговая цена = ")
                 .append(price)
-                .append("\n")
+                .append(" ")
                 .append("Статус = ")
                 .append(status);
         switch (status) {
             case APPLIED: {
                 builder
-                        .append("\nЗаказ принят ")
-                        .append(Analytics.getTime(applied));
+                        .append(" Заказ принят ")
+                        .append(applied.toString());
                 break;
             }
             case PURCHASED: {
                 builder
-                        .append("\nЗаказ оплачен ")
-                        .append(Analytics.getTime(paid));
+                        .append(" Заказ оплачен ")
+                        .append(paid.toString());
                 break;
             }
             case GIVEOFF: {
                 builder
-                        .append("\nРабота сдана ")
-                        .append(Analytics.getTime(gaveOff));
+                        .append(" Работа сдана ")
+                        .append(gaveOff.toString());
                 break;
             }
         }
@@ -302,11 +276,11 @@ gaveoff_by_uid int null default null
         this.comment = comment;
     }
 
-    public Integer getPrice() {
+    public Float getPrice() {
         return price;
     }
 
-    public void setPrice(Integer price) {
+    public void setPrice(Float price) {
         this.price = price;
     }
 
@@ -316,20 +290,17 @@ gaveoff_by_uid int null default null
 
     private void setStatus(String status) {
         this.status = status;
-//        Currently postpone analytics
-//        Analytics.getInstance().updatePostWorkDataStatus(dataURI, "<" + status + "> for price <" + price + ">");
-        save();
     }
 
-    public Long getApplied() {
+    public Timestamp getApplied() {
         return applied;
     }
 
-    public Long getPaid() {
+    public Timestamp getPaid() {
         return paid;
     }
 
-    public Long getGaveOff() {
+    public Timestamp getGaveOff() {
         return gaveOff;
     }
 
@@ -349,12 +320,12 @@ gaveoff_by_uid int null default null
         this.takenByUID = takenByUID;
     }
 
-    public Long getTaken() {
-        return taken;
+    public void setGaveOff(Timestamp gaveOff) {
+        this.gaveOff = gaveOff;
     }
 
-    public void setTaken(Long taken) {
-        this.taken = taken;
+    public Timestamp getTaken() {
+        return taken;
     }
 
     public Long getReviewByUID() {
@@ -365,8 +336,8 @@ gaveoff_by_uid int null default null
         this.reviewByUID = reviewByUID;
     }
 
-    public void setGaveOff(Long gaveOff) {
-        this.gaveOff = gaveOff;
+    public void setTaken(Timestamp taken) {
+        this.taken = taken;
     }
 
     public Long getGaveOffByUID() {
@@ -377,25 +348,38 @@ gaveoff_by_uid int null default null
         this.gaveOffByUID = gaveOffByUID;
     }
 
+    public void setId(Long contractId) {
+        id = contractId;
+    }
+
+    public Timestamp getCreated() {
+        return created;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Contract)) return false;
         Contract contract = (Contract) o;
-        return getCustomerId() == contract.getCustomerId() &&
+        return customer_uid == contract.customer_uid &&
                 work_data_id == contract.work_data_id &&
+                getId().equals(contract.getId()) &&
                 getName().equals(contract.getName()) &&
                 getAdditional().equals(contract.getAdditional()) &&
                 getPrice().equals(contract.getPrice()) &&
-                getStatus().equals(contract.getStatus());
+                Objects.equals(getApplied(), contract.getApplied()) &&
+                Objects.equals(getPaid(), contract.getPaid()) &&
+                Objects.equals(getTaken(), contract.getTaken()) &&
+                Objects.equals(getGaveOff(), contract.getGaveOff()) &&
+                created.equals(contract.created) &&
+                Objects.equals(getPaymentCheckedByUID(), contract.getPaymentCheckedByUID()) &&
+                Objects.equals(getTakenByUID(), contract.getTakenByUID()) &&
+                Objects.equals(getReviewByUID(), contract.getReviewByUID()) &&
+                Objects.equals(getGaveOffByUID(), contract.getGaveOffByUID());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCustomerId(), work_data_id, getName(), getAdditional(), getPrice(), getStatus());
-    }
-
-    public void setId(Long contractId) {
-        id = contractId;
+        return Objects.hash(getId(), customer_uid, work_data_id, getName(), getAdditional(), getPrice(), getApplied(), getPaid(), getTaken(), getGaveOff(), created, getPaymentCheckedByUID(), getTakenByUID(), getReviewByUID(), getGaveOffByUID());
     }
 }

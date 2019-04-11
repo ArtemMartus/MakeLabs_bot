@@ -335,14 +335,14 @@ public class DatabaseManager {
             preparedStatement.setString(2, contract.getName());
             preparedStatement.setString(3, contract.getAdditional());
             preparedStatement.setString(4, contract.getComment());
-            preparedStatement.setInt(5, contract.getPrice());
+            preparedStatement.setFloat(5, contract.getPrice());
             preparedStatement.setLong(6, contract.getWorkDataId());
             preparedStatement.setString(7, contract.getStatus());
 
-            Timestamp applied = unixToTimestamp(contract.getApplied());
-            Timestamp paid = unixToTimestamp(contract.getPaid());
-            Timestamp taken = unixToTimestamp(contract.getTaken());
-            Timestamp gaveoff = unixToTimestamp(contract.getGaveOff());
+            Timestamp applied = (contract.getApplied());
+            Timestamp paid = (contract.getPaid());
+            Timestamp taken = (contract.getTaken());
+            Timestamp gaveoff = (contract.getGaveOff());
 
             if (applied != null)
                 preparedStatement.setTimestamp(8, applied);
@@ -413,33 +413,46 @@ public class DatabaseManager {
 
     public Long getContractId(Contract contract) {
         Long contractId = null;
-        try (PreparedStatement preparedStatement = connection.
-                prepareStatement("select id from contracts where customer_uid=? and name=? " +
-                        "and work_data_id=? and price=? and status=? and additional=? limit 1")) {
-            //todo make the search through 'created' timestamp
-            preparedStatement.setLong(1, contract.getCustomerId());
-            preparedStatement.setString(2, contract.getName());
-            preparedStatement.setLong(3, contract.getWorkDataId());
-            preparedStatement.setInt(4, contract.getPrice());
-            preparedStatement.setString(5, contract.getStatus());
-            preparedStatement.setString(6, contract.getAdditional());
+        if (contract == null)
+            return null;
 
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.first()) {
-                contractId = resultSet.getLong("id");
-                Analytics.getInstance().updateDatabaseSelects(1);
+        if (contract.getCreated() != null) {
+            try (PreparedStatement preparedStatement = connection.
+                    prepareStatement("select id from contracts where created=? limit 1")) {
+                preparedStatement.setTimestamp(1, contract.getCreated());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+                if (resultSet.first()) {
+                    contractId = resultSet.getLong("id");
+                    Analytics.getInstance().updateDatabaseSelects(1);
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
+        } else {
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+            try (PreparedStatement preparedStatement = connection.
+                    prepareStatement("select id from contracts where customer_uid=? and name=? " +
+                            "and work_data_id=? and price=? and status=? and additional=? limit 1")) {
+                preparedStatement.setLong(1, contract.getCustomerId());
+                preparedStatement.setString(2, contract.getName());
+                preparedStatement.setLong(3, contract.getWorkDataId());
+                preparedStatement.setFloat(4, contract.getPrice());
+                preparedStatement.setString(5, contract.getStatus());
+                preparedStatement.setString(6, contract.getAdditional());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+                if (resultSet.first()) {
+                    contractId = resultSet.getLong("id");
+                    Analytics.getInstance().updateDatabaseSelects(1);
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
         return contractId;
-    }
-
-    private Timestamp unixToTimestamp(Long time) {
-        if (time == null || time <= 0L)
-            return null;
-        return new Timestamp(time * 1000L);
     }
 
     private Contract parseContractFromResultSet(ResultSet resultSet) throws SQLException {
@@ -448,7 +461,7 @@ public class DatabaseManager {
         String name = resultSet.getString("name");
         String additional = resultSet.getString("additional");
         String comment = resultSet.getString("comment");
-        Integer price = resultSet.getInt("price");
+        Float price = resultSet.getFloat("price");
         Long work_data_id = resultSet.getLong("work_data_id");
         String status = resultSet.getString("status");
         Timestamp applied = resultSet.getTimestamp("applied");
@@ -459,10 +472,12 @@ public class DatabaseManager {
         Long reviewed_by_uid = resultSet.getLong("reviewed_by_uid");
         Timestamp gaveoff = resultSet.getTimestamp("gaveoff");
         Long gaveoff_by_uid = resultSet.getLong("gaveoff_by_uid");
+        Timestamp created = resultSet.getTimestamp("created");
 
         return new Contract(id, customer_uid, work_data_id, name, additional,
                 comment, price, status, applied, paid, payment_checked_by_uid,
-                taken_by_uid, taken, reviewed_by_uid, gaveoff, gaveoff_by_uid);
+                taken_by_uid, taken, reviewed_by_uid, gaveoff, gaveoff_by_uid,
+                created);
     }
 
     private PostWorkData parseWorkDataFromResultSet(ResultSet resultSet) throws SQLException {
@@ -474,9 +489,8 @@ public class DatabaseManager {
         String uri = resultSet.getString("uri");
         Boolean isEndpoint = resultSet.getBoolean("has_child");
 
-        //todo save unixtime directly to database as unixtimestamp instead of multiple casting to and from sql.Timestap to unix and so on
         return new PostWorkData(id, params, description, created_by_uid,
-                created.getTime() / 1000, uri, isEndpoint);
+                created, uri, isEndpoint);
     }
 
     private ContractUser parseContractUserFromResultSet(ResultSet resultSet) throws SQLException {

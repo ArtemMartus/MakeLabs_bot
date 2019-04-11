@@ -5,10 +5,11 @@
 package main.makelabs_bot.model.data_pojo;
 
 import main.makelabs_bot.helper.Log;
-import main.makelabs_bot.model.Analytics;
 import org.glassfish.grizzly.utils.Pair;
 import org.json.JSONObject;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -19,12 +20,12 @@ public class PostWorkData {
     private List<Pair<String, Integer>> params = new LinkedList<>();
     private String description;
     private Long createdByUid;
-    private Long created = System.currentTimeMillis() / 1000L;
+    private Timestamp created = new Timestamp(new Date().getTime());
     private String uri;
     private Boolean has_child = false;
 
 
-    public PostWorkData(Long id, String params, String description, Long createdByUid, Long created, String uri,
+    public PostWorkData(Long id, String params, String description, Long createdByUid, Timestamp created, String uri,
                         Boolean isEndpoint) {
         this.id = id;
         setParams(params);
@@ -40,13 +41,6 @@ public class PostWorkData {
         this.description = description;
         this.createdByUid = createdByUid;
         this.uri = uri;
-//        save(); not testable
-    }
-
-    public void save() {
-        Analytics.getInstance().getMakeLabs_bot().model.saveWorkData(this);
-        if ((id == null || id < 0))
-            id = Analytics.getInstance().getMakeLabs_bot().model.getWorkDataId(this);
     }
 
     public boolean hasParams() {
@@ -118,11 +112,15 @@ public class PostWorkData {
         return uri;
     }
 
+    public float getOverallPrice() {
+        return 0.0f;//todo implement overall price for work
+    }
+
     public void setUri(String uri) {
         this.uri = uri;
     }
 
-    public Long getCreated() {
+    public Timestamp getCreated() {
         return created;
     }
 
@@ -140,7 +138,7 @@ public class PostWorkData {
         if (!(o instanceof PostWorkData)) return false;
         PostWorkData that = (PostWorkData) o;
         return getId().equals(that.getId()) &&
-                getParams().equals(that.getParams()) &&
+                Objects.equals(getParams(), that.getParams()) &&
                 getDescription().equals(that.getDescription()) &&
                 getCreatedByUid().equals(that.getCreatedByUid()) &&
                 getCreated().equals(that.getCreated()) &&

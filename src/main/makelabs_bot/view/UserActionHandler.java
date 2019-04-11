@@ -150,7 +150,7 @@ public class UserActionHandler implements MessageHandler {
 
                     contract.setUpAllIncluding(workData);
 
-                    contract.toogle(commandBuilder.getCommand());
+                    contract.toggle(commandBuilder.getCommand());
 
                     editedText = contract.getCheckoutText(workData);
 

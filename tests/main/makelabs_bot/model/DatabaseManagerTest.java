@@ -32,7 +32,7 @@ class DatabaseManagerTest {
     void getAllAppliedNotPaidContracts() {
         try {
             Contract contract = new Contract(1L, 5L, "test contract",
-                    "#function1##function2#", "comment", 333);
+                    "#function1##function2#", "comment", 333.0f);
             databaseManager.saveContract(contract);
             Long contractId = databaseManager.getContractId(contract);
             contract = databaseManager.getContract(contractId);
@@ -106,16 +106,16 @@ class DatabaseManagerTest {
             ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z", 134);
             databaseManager.saveUser(contractUser);
             Contract contract = new Contract(13372290, 5L, "test contract",
-                    "#function1##function2#", "comment", 333);
+                    "#function1##function2#", "comment", 333.0f);
             databaseManager.saveContract(contract);
             Contract contract2 = new Contract(13372290, 5L, "test contract2",
-                    "#function31##functio3n2#", "comment2", 333);
+                    "#function31##functio3n2#", "comment2", 333.0f);
             databaseManager.saveContract(contract2);
             contract = databaseManager.getContract(databaseManager.getContractId(contract));
             contract2 = databaseManager.getContract(databaseManager.getContractId(contract2));
             List<Contract> contracts = databaseManager.getAllUserContracts(contractUser);
-//            for (Contract c : contracts)
-//                Log.Info(c.toString());
+            for (Contract c : contracts)
+                Log.Info(c.toString());
             assertTrue(contracts.contains(contract));
             assertTrue(contracts.contains(contract2));
         } catch (SQLException ex) {
