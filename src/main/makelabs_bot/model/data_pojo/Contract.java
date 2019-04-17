@@ -4,7 +4,7 @@
 
 package main.makelabs_bot.model.data_pojo;
 
-import org.glassfish.grizzly.utils.Pair;
+import main.makelabs_bot.model.other_pojo.Button;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -143,11 +143,11 @@ public class Contract implements Serializable {
         int overall_price = 0;
         StringBuilder editedText = new StringBuilder(getName());
         editedText.append("\n");
-        for (Pair<String, Integer> pair : data.getParams()) {
-            String name = pair.getFirst();
+        for (Button pair : data.getParams()) {
+            String name = pair.getName();
             boolean checked = isSet(name);
-            int price = pair.getSecond();
-            if (price < 0)
+            Float price = pair.getPrice();
+            if (price == null)
                 continue; // it is not actual payment related button. like 'back' button or so
             editedText.append(name).append(" ").append(price).append("₴");
             if (checked) {

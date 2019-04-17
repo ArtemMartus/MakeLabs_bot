@@ -205,6 +205,7 @@ public class UserActionHandler implements MessageHandler {
         }
 
 
+        //todo implement InnerPath instead of CommandBuilder
         Log.Info("\tText = " + commandBuilder.getURI()
                 + "\n\tCommand = " + commandBuilder.getCommand()
                 + "\n\tValid Text = " + commandBuilder.getValidURI());

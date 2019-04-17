@@ -4,10 +4,12 @@
 
 package main.makelabs_bot.model.data_pojo;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import main.makelabs_bot.helper.Log;
-import org.glassfish.grizzly.utils.Pair;
-import org.json.JSONObject;
+import main.makelabs_bot.model.other_pojo.Button;
 
+import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.LinkedList;
@@ -17,7 +19,7 @@ import java.util.Objects;
 public class PostWorkData {
 
     private Long id;
-    private List<Pair<String, Integer>> params = new LinkedList<>();
+    private List<Button> params = new LinkedList<>();
     private String description;
     private Long createdByUid;
     private Timestamp created = new Timestamp(new Date().getTime());
@@ -51,41 +53,26 @@ public class PostWorkData {
     public boolean hasChild(String command) {
         if (!hasParams())
             return false;
-        for (Pair<String, Integer> pair : params)
-            if (pair.getFirst().equals(command))
+        for (Button btn : params)
+            if (btn.getName().equals(command))
                 return true;
         return false;
     }
 
     public String getJsonParams() {
-        return new JSONObject(params).toString();
+        return new Gson().toJson(params);
     }
 
-    @Override
-    public String toString() {
-        return "PostWorkData{" +
-                "id=" + id +
-                ", params=" + getJsonParams() +
-                ", description='" + description + '\'' +
-                ", createdByUid=" + createdByUid +
-                ", created=" + created +
-                ", uri='" + uri + '\'' +
-                ", has_child=" + has_child +
-                '}';
-    }
 
-    public List<Pair<String, Integer>> getParams() {
+    public List<Button> getParams() {
         return params;
     }
 
     public void setParams(String jsonParams) {
-        JSONObject rootJson = new JSONObject(jsonParams);
-//      debug printout todo make it load from json
-        //todo think about button data we need
-        // button name: String
-        // button uri it leads to: String
-        // button price if any: Int
-        Log.Info(rootJson.toString());
+        Type listType = new TypeToken<List<Button>>() {
+        }.getType();
+        params = new Gson().fromJson(jsonParams, listType);
+        Log.Info(params.toString());
     }
 
     public Long getId() {
@@ -113,7 +100,12 @@ public class PostWorkData {
     }
 
     public float getOverallPrice() {
-        return 0.0f;//todo implement overall price for work
+        float price = 0.0f;
+        for (Button btn : params) {
+            if (btn.getPrice() != null)
+                price += btn.getPrice();
+        }
+        return price;
     }
 
     public void setUri(String uri) {

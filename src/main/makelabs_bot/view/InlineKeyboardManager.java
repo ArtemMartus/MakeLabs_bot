@@ -5,7 +5,7 @@
 package main.makelabs_bot.view;
 
 import main.makelabs_bot.model.data_pojo.PostWorkData;
-import org.glassfish.grizzly.utils.Pair;
+import main.makelabs_bot.model.other_pojo.Button;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -47,14 +47,14 @@ public class InlineKeyboardManager implements MessageHandler {
 
         List<InlineKeyboardButton> row = new LinkedList<>();
 
-        List<Pair<String, Integer>> data = workData.getParams();
+        List<Button> data = workData.getParams();
 
         int buttons = data.size();
         //final int chars_in_a_row = 62; //desktop
         final int chars_in_a_row = 48;  //mobile
         final int columns = 3;
 
-        data.sort((Comparator.comparingInt(o -> o.getFirst().length())));
+        data.sort((Comparator.comparingInt(o -> o.getName().length())));
 
         List<InlineKeyboardButton> appendToTheEndButtons = new LinkedList<>();
 
@@ -62,12 +62,12 @@ public class InlineKeyboardManager implements MessageHandler {
             for (int i = 0, cch = chars_in_a_row; i < columns && buttons > 0; ++i, buttons--) {
 
                 int current_id = data.size() - buttons;
-                String buttonText = data.get(current_id).getFirst();
-                int price = data.get(current_id).getSecond();
+                String buttonText = data.get(current_id).getName();
+                Float price = data.get(current_id).getPrice();
 
                 cch -= buttonText.length();
 
-                if (price == -99) {
+                if (price == null) {
                     appendToTheEndButtons.add(
                             new InlineKeyboardButton(buttonText).setCallbackData(buttonText)
                     );
@@ -80,7 +80,7 @@ public class InlineKeyboardManager implements MessageHandler {
 
                 if (cch <= 0 && row.size() >= 1 ||
                         (current_id + 1 < data.size() &&
-                                cch < data.get(current_id + 1).getFirst().length())) {
+                                cch < data.get(current_id + 1).getName().length())) {
                     layout.add(row);
                     row = new LinkedList<>();
                 }
