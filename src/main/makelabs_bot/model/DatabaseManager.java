@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class DatabaseManager {
-    static String databaseName;
+    public static String databaseName;
     private static DatabaseManager databaseManager;
     private final Connection connection;
     private final Statement statement;

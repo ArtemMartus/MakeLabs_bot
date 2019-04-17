@@ -88,7 +88,7 @@ class DatabaseManagerTest {
     @Test
     void getWorkData() {
         try {
-            PostWorkData postWorkData = new PostWorkData("{}", "my description", 1L, "/hello");
+            PostWorkData postWorkData = new PostWorkData("[]", "my description", 1L, "/hello");
             databaseManager.saveWorkData(postWorkData);
             Long dataId = databaseManager.getWorkDataId(postWorkData);
             PostWorkData got1 = databaseManager.getWorkData("/hello");

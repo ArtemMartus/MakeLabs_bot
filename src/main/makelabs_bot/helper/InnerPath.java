@@ -18,7 +18,9 @@ public class InnerPath {
     }
 
     public String getLast() {
-        return data.substring(data.lastIndexOf("/"));
+        if (data.isEmpty())
+            return data;
+        return data.substring(data.lastIndexOf("/") + 1);
     }
 
     public String getPath() {
@@ -30,9 +32,13 @@ public class InnerPath {
     }
 
     public String goBack() {
-        if (data.length() > 1) {
-            data = data.substring(0, data.lastIndexOf("/"));
-        }
+        int index = data.lastIndexOf("/");
+        if (index == 0 &&
+                data.length() > 0)
+            index++;
+        if (data.length() == 0 || index < 0)
+            return data;
+        data = data.substring(0, index);
         return data;
     }
 

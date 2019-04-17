@@ -23,7 +23,7 @@ public class PostWorkData {
     private String description;
     private Long createdByUid;
     private Timestamp created = new Timestamp(new Date().getTime());
-    private String uri;
+    private String uri; // todo migrate it  from string to InnerPath
     private Boolean has_child = false;
 
 
