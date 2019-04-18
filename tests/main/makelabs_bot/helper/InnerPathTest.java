@@ -41,7 +41,7 @@ class InnerPathTest {
     void isWorkData() {
         try {
             PostWorkData workData = new PostWorkData("[]", "test workData", 1L,
-                    "/hello/test");
+                    new InnerPath("/hello/test"));
             databaseManager.saveWorkData(workData);
 
             assertTrue(new InnerPath("/hello/test").isWorkData());
@@ -54,11 +54,24 @@ class InnerPathTest {
     }
 
     @Test
+    void testCommandAdding() {
+        assertEquals("/add", new InnerPath("/").addCommand("add"));
+        assertEquals("/add", new InnerPath("/").addCommand("/add"));
+        assertEquals("/add", new InnerPath("/add").addCommand(""));
+        assertEquals("/add", new InnerPath("/add").addCommand("/"));
+        assertEquals("/add/hello", new InnerPath("/add/").addCommand("/hello"));
+        assertEquals("/", new InnerPath("/").addCommand(""));
+        assertEquals("/", new InnerPath("/").addCommand("/"));
+        assertEquals("/", new InnerPath("").addCommand(""));
+    }
+
+
+    @Test
     void goBack() {
         assertEquals("/hello", new InnerPath("/hello/world").goBack());
         assertEquals("hello", new InnerPath("hello/world").goBack());
         assertEquals("/", new InnerPath("/hello").goBack());
-        assertEquals("", new InnerPath("hello").goBack()); //this one fails todo make it
+        assertEquals("", new InnerPath("hello").goBack());
         assertEquals("/", new InnerPath("/").goBack());
         assertEquals("", new InnerPath("").goBack());
     }

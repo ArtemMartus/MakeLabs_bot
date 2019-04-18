@@ -6,6 +6,7 @@ package main.makelabs_bot.model.data_pojo;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.other_pojo.Button;
 
@@ -23,11 +24,11 @@ public class PostWorkData {
     private String description;
     private Long createdByUid;
     private Timestamp created = new Timestamp(new Date().getTime());
-    private String uri; // todo migrate it  from string to InnerPath
+    private InnerPath uri;
     private Boolean has_child = false;
 
 
-    public PostWorkData(Long id, String params, String description, Long createdByUid, Timestamp created, String uri,
+    public PostWorkData(Long id, String params, String description, Long createdByUid, Timestamp created, InnerPath uri,
                         Boolean isEndpoint) {
         this.id = id;
         setParams(params);
@@ -38,7 +39,7 @@ public class PostWorkData {
         this.has_child = !isEndpoint;
     }
 
-    public PostWorkData(String jsonParams, String description, Long createdByUid, String uri) {
+    public PostWorkData(String jsonParams, String description, Long createdByUid, InnerPath uri) {
         setParams(jsonParams);
         this.description = description;
         this.createdByUid = createdByUid;
@@ -60,7 +61,9 @@ public class PostWorkData {
     }
 
     public String getJsonParams() {
-        return new Gson().toJson(params);
+        Type listOfTestObject = new TypeToken<List<Button>>() {
+        }.getType();
+        return new Gson().toJson(params, listOfTestObject);
     }
 
 
@@ -69,9 +72,9 @@ public class PostWorkData {
     }
 
     public void setParams(String jsonParams) {
-        Type listType = new TypeToken<List<Button>>() {
+        Type listOfTestObject = new TypeToken<List<Button>>() {
         }.getType();
-        params = new Gson().fromJson(jsonParams, listType);
+        params = new Gson().fromJson(jsonParams, listOfTestObject);
         Log.Info(params.toString());
     }
 
@@ -95,7 +98,7 @@ public class PostWorkData {
         this.createdByUid = createdByUid;
     }
 
-    public String getUri() {
+    public InnerPath getUri() {
         return uri;
     }
 
@@ -108,7 +111,7 @@ public class PostWorkData {
         return price;
     }
 
-    public void setUri(String uri) {
+    public void setUri(InnerPath uri) {
         this.uri = uri;
     }
 

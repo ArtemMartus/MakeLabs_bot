@@ -4,19 +4,20 @@
 
 package main.makelabs_bot.view;
 
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 public class RegularMessageHandler implements MessageHandler {
 
-    private final CommandBuilder commandBuilder;
+    private final InnerPath innerPath;
     private final User fromUser;
     private final Long chatId;
     private boolean goHome = false;
 
-    public RegularMessageHandler(CommandBuilder commandBuilder, User fromUser, Long chatId) {
-        this.commandBuilder = commandBuilder;
+    public RegularMessageHandler(InnerPath innerPath, User fromUser, Long chatId) {
+        this.innerPath = innerPath;
         this.fromUser = fromUser;
         this.chatId = chatId;
     }
@@ -24,7 +25,7 @@ public class RegularMessageHandler implements MessageHandler {
     @Override
     public void handle() {
         String answer = "";
-        String lowCaseMessage = commandBuilder.getCommand().toLowerCase();
+        String lowCaseMessage = innerPath.getLast().toLowerCase();
         if (lowCaseMessage.contains("пидор"))
             answer = "А может ты пидор?";
         else if (lowCaseMessage.contains("что"))
@@ -39,7 +40,7 @@ public class RegularMessageHandler implements MessageHandler {
             answer = "Извините, "
                     + fromUser.getFirstName()
                     + ", я понятия не имею что значит Ваше "
-                    + commandBuilder.getCommand();
+                    + innerPath.getLast();
             goHome = true;
         }
 
@@ -53,14 +54,15 @@ public class RegularMessageHandler implements MessageHandler {
 
     @Override
     public boolean isValid() {
-        return commandBuilder != null
-                && commandBuilder.isValid()
+        return innerPath != null
+                && !innerPath.isEmpty()
+                && innerPath.isAbsolute()
                 && fromUser != null
                 && chatId != null;
     }
 
-    public CommandBuilder getCommandBuilder() {
-        return commandBuilder;
+    public InnerPath getInnerPath() {
+        return innerPath;
     }
 
     public User getFromUser() {

@@ -4,6 +4,7 @@
 
 package main.makelabs_bot.view;
 
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.data_pojo.ContractUser;
@@ -50,10 +51,15 @@ public class View implements Observer {
             CallbackMessageHandler callbackMessageHandler = new CallbackMessageHandler(callbackId,
                     null, fromUser);
 
-            CommandBuilder commandBuilder = new CommandBuilder(contractUser.getStateUri(), gotMessage);
-            RegularMessageHandler regularMessageHandler = new RegularMessageHandler(commandBuilder, fromUser, chatId);
 
-            String getUri = commandBuilder.getValidURI();
+            InnerPath innerPath = new InnerPath(contractUser.getStateUri());
+            innerPath.addCommand(gotMessage);
+            RegularMessageHandler regularMessageHandler = new RegularMessageHandler(innerPath, fromUser, chatId);
+
+            if (!innerPath.isWorkData()) {
+                innerPath.goBack();//get valid path
+            }
+            String getUri = innerPath.getPath();
 
             PostWorkData workData = viewModel.getWorkData(getUri, fromUser);
             if (workData == null) {

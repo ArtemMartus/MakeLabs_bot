@@ -4,6 +4,7 @@
 
 package main.makelabs_bot.model;
 
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.model.data_pojo.ContractUser;
@@ -14,24 +15,35 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DatabaseManagerTest {
 
     private static DatabaseManager databaseManager;
+    private static long defaultWorkDataId;
 
     @BeforeEach
     void setUp() {
         Log.setShowLevel(Log.EVERYTHING);
         DatabaseManager.databaseName = "testDatabase";
         databaseManager = DatabaseManager.getInstance();
+        try {
+            PostWorkData workData = databaseManager.getWorkData("/");
+            if (workData == null) {
+                workData = new PostWorkData("[]", "test mock", 1L, new InnerPath("/"));
+                databaseManager.saveWorkData(workData);
+            }
+            defaultWorkDataId = workData.getId();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void getAllAppliedNotPaidContracts() {
         try {
-            Contract contract = new Contract(1L, 5L, "test contract",
+
+            Contract contract = new Contract(1L, defaultWorkDataId, "test contract",
                     "#function1##function2#", "comment", 333.0f);
             databaseManager.saveContract(contract);
             Long contractId = databaseManager.getContractId(contract);
@@ -86,9 +98,22 @@ class DatabaseManagerTest {
     }
 
     @Test
+    void saveUniqueWorkData() {
+        try {
+            PostWorkData postWorkData = new PostWorkData("[]", "my description", 1L, new InnerPath("/hello"));
+            PostWorkData postWorkData_dup = new PostWorkData("[]", "this uses same path", 1L, new InnerPath("/hello"));
+            assertTrue(databaseManager.saveWorkData(postWorkData));
+            assertFalse(databaseManager.saveWorkData(postWorkData_dup));
+            databaseManager.removeWorkData("/hello");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Test
     void getWorkData() {
         try {
-            PostWorkData postWorkData = new PostWorkData("[]", "my description", 1L, "/hello");
+            PostWorkData postWorkData = new PostWorkData("[]", "my description", 1L, new InnerPath("/hello"));
             databaseManager.saveWorkData(postWorkData);
             Long dataId = databaseManager.getWorkDataId(postWorkData);
             PostWorkData got1 = databaseManager.getWorkData("/hello");
@@ -105,10 +130,10 @@ class DatabaseManagerTest {
         try {
             ContractUser contractUser = new ContractUser(13372290, "nigga", "jay", "z");
             databaseManager.saveUser(contractUser);
-            Contract contract = new Contract(13372290, 5L, "test contract",
+            Contract contract = new Contract(13372290, defaultWorkDataId, "test contract",
                     "#function1##function2#", "comment", 333.0f);
             databaseManager.saveContract(contract);
-            Contract contract2 = new Contract(13372290, 5L, "test contract2",
+            Contract contract2 = new Contract(13372290, defaultWorkDataId, "test contract2",
                     "#function31##functio3n2#", "comment2", 333.0f);
             databaseManager.saveContract(contract2);
             contract = databaseManager.getContract(databaseManager.getContractId(contract));

@@ -5,6 +5,7 @@
 package main.makelabs_bot.model;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.data_pojo.Contract;
 import main.makelabs_bot.model.data_pojo.ContractUser;
@@ -24,7 +25,7 @@ public class DatabaseManager {
         Dotenv dotenv = Dotenv.load();
         String password = dotenv.get("DB_PASSWORD");
         String user = dotenv.get("DB_USER");
-        String databaseUri = dotenv.get("DB_URI");//todo change mysql server uri
+        String databaseUri = "jdbc:mysql://" + dotenv.get("DB_URI") + "/";//todo change mysql server uri
 
         if (databaseName == null || databaseName.isEmpty())
             databaseName = dotenv.get("DB_NAME");
@@ -52,6 +53,13 @@ public class DatabaseManager {
         } else {
             Log.Info("DatabaseManager has some issue with starting", Log.DATABASE_MANAGER);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        connection.close();
+        statement.close();
+        super.finalize();
     }
 
     public static DatabaseManager getInstance() {
@@ -204,9 +212,13 @@ public class DatabaseManager {
         return workData;
     }
 
-    public void saveWorkData(PostWorkData postWorkData) throws SQLException {
+    public boolean saveWorkData(PostWorkData postWorkData) throws SQLException {
         if (postWorkData == null || postWorkData.getUri() == null || postWorkData.getUri().isEmpty())
-            return;
+            return false;
+
+        PostWorkData duplicateCheck = getWorkData(postWorkData.getUri().getPath());
+        if (duplicateCheck != null)
+            return false; // duplicate found, can't insert
 
         PostWorkData tryToGet = getWorkData(postWorkData.getId());
         String query;
@@ -226,12 +238,12 @@ public class DatabaseManager {
                 preparedStatement.setString(1, postWorkData.getJsonParams());
                 preparedStatement.setString(2, postWorkData.getDescription());
                 preparedStatement.setLong(3, postWorkData.getCreatedByUid());
-                preparedStatement.setString(4, postWorkData.getUri());
+                preparedStatement.setString(4, postWorkData.getUri().getPath());
                 preparedStatement.setBoolean(5, !postWorkData.isEndpoint());
             } else {
                 preparedStatement.setString(1, postWorkData.getJsonParams());
                 preparedStatement.setString(2, postWorkData.getDescription());
-                preparedStatement.setString(3, postWorkData.getUri());
+                preparedStatement.setString(3, postWorkData.getUri().getPath());
                 preparedStatement.setBoolean(4, !postWorkData.isEndpoint());
                 preparedStatement.setLong(5, postWorkData.getId());
             }
@@ -243,7 +255,9 @@ public class DatabaseManager {
                 Analytics.getInstance().updateDatabaseUpdates(rows);
         } catch (SQLException ex) {
             ex.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     public Contract getContract(Long byId) {
@@ -273,7 +287,7 @@ public class DatabaseManager {
         try (PreparedStatement preparedStatement = connection.
                 prepareStatement("select id from work_data where uri=? limit 1")) {
 
-            preparedStatement.setString(1, postWorkData.getUri());
+            preparedStatement.setString(1, postWorkData.getUri().getPath());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 id = resultSet.getLong("id");
@@ -489,7 +503,7 @@ public class DatabaseManager {
         Boolean isEndpoint = resultSet.getBoolean("has_child");
 
         return new PostWorkData(id, params, description, created_by_uid,
-                created, uri, isEndpoint);
+                created, new InnerPath(uri), isEndpoint);
     }
 
     private ContractUser parseContractUserFromResultSet(ResultSet resultSet) throws SQLException {

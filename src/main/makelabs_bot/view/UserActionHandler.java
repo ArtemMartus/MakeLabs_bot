@@ -4,6 +4,7 @@
 
 package main.makelabs_bot.view;
 
+import main.makelabs_bot.helper.InnerPath;
 import main.makelabs_bot.helper.Log;
 import main.makelabs_bot.model.Analytics;
 import main.makelabs_bot.model.data_pojo.Contract;
@@ -21,7 +22,8 @@ public class UserActionHandler implements MessageHandler {
     private final User fromUser;
     private final InlineKeyboardManager keyboard;
     private final Long chatId;
-    private final CommandBuilder commandBuilder;
+    private final InnerPath innerPath;
+    private final InnerPath validInnerPath;
     private final ViewModel viewModel;
 
     private boolean handled = false;
@@ -40,13 +42,17 @@ public class UserActionHandler implements MessageHandler {
 
 
         if (messageHandler.isValid()) {
-            this.commandBuilder = messageHandler.getCommandBuilder();
+            this.innerPath = messageHandler.getInnerPath();
             this.fromUser = messageHandler.getFromUser();
             this.chatId = messageHandler.getChatId();
         } else {
             this.fromUser = null;
             this.chatId = null;
-            this.commandBuilder = null;
+            this.innerPath = null;
+        }
+        validInnerPath = innerPath;
+        if (validInnerPath != null && !innerPath.isWorkData()) {
+            validInnerPath.goBack();
         }
 
         if (keyboard.isValid()) {
@@ -61,8 +67,7 @@ public class UserActionHandler implements MessageHandler {
 
     private void getHome() {
         messageId = viewModel.initializeUserState();
-        commandBuilder.setHome();
-        workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
+        workData = viewModel.getWorkData(innerPath.goHome(), fromUser);
         contractUser.setMessageId(messageId);
     }
 
@@ -71,7 +76,7 @@ public class UserActionHandler implements MessageHandler {
     }
 
     private boolean precheck() throws Exception {
-        String command = commandBuilder.getCommand();
+        String command = innerPath.getLast();
         switch (command) {
             case "start": {
                 getHome();
@@ -124,9 +129,7 @@ public class UserActionHandler implements MessageHandler {
                 return true;
             }
             case "Назад": {
-                commandBuilder.updateState(contractUser.goBack());
-                commandBuilder.clearCommand();
-                workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
+                workData = viewModel.getWorkData(contractUser.goBack(), fromUser);
                 return true;
             }
             case "Подтвердить": {
@@ -143,14 +146,14 @@ public class UserActionHandler implements MessageHandler {
             }
             default: {
 
-                workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
+                workData = viewModel.getWorkData(validInnerPath.getPath(), fromUser);
 
-                if (workData.hasChild(commandBuilder.getCommand())) {
+                if (workData.hasChild(validInnerPath.getLast())) {
                     Contract contract = viewModel.getUnappliedContract(contractUser);
 
                     contract.setUpAllIncluding(workData);
 
-                    contract.toggle(commandBuilder.getCommand());
+                    contract.toggle(validInnerPath.getLast());
 
                     editedText = contract.getCheckoutText(workData);
 
@@ -165,8 +168,8 @@ public class UserActionHandler implements MessageHandler {
     @Override
     public void handle() {
         boolean returnPrecheck = false;
-        if (!commandBuilder.baseUrlValid()
-                && !commandBuilder.getCommand().isEmpty()) {
+        if (!innerPath.equals(validInnerPath)
+                && !innerPath.getLast().isEmpty()) {
             try {
                 returnPrecheck = precheck();
             } catch (Exception e) {
@@ -178,12 +181,12 @@ public class UserActionHandler implements MessageHandler {
             handled = returnPrecheck;
         }
 
-        contractUser.setStateUri(commandBuilder.getValidURI());
+        contractUser.setStateUri(validInnerPath.getPath());
         viewModel.saveContractUser(contractUser);
 
         if (workData == null) {
             Log.Info("Some strange shit makes data_pojo set to null...");
-            workData = viewModel.getWorkData(commandBuilder.getValidURI(), fromUser);
+            workData = viewModel.getWorkData(validInnerPath.getPath(), fromUser);
         }
 
         keyboard.updateData(workData);
@@ -206,9 +209,9 @@ public class UserActionHandler implements MessageHandler {
 
 
         //todo implement InnerPath instead of CommandBuilder
-        Log.Info("\tText = " + commandBuilder.getURI()
-                + "\n\tCommand = " + commandBuilder.getCommand()
-                + "\n\tValid Text = " + commandBuilder.getValidURI());
+        Log.Info("\tText = " + innerPath.getPath()
+                + "\n\tCommand = " + innerPath.getLast()
+                + "\n\tValid Text = " + validInnerPath.getPath());
 
 
         if (editedText == null)
@@ -257,8 +260,9 @@ public class UserActionHandler implements MessageHandler {
         return !handled
                 && keyboard != null
                 && keyboard.isValid()
-                && commandBuilder != null
-                && commandBuilder.isValid()
+                && innerPath != null
+                && !innerPath.isEmpty()
+                && innerPath.isAbsolute()
                 && viewModel != null
                 && ((messageHandler != null && messageHandler.isValid())
                 || (callbackMessageHandler != null && callbackMessageHandler.isValid()));
