@@ -4,8 +4,8 @@
 
 package makelabs_bot.view;
 
-import makelabs_bot.helper.InnerPath;
-import makelabs_bot.helper.Log;
+import helper.InnerPath;
+import helper.Log;
 import makelabs_bot.model.Analytics;
 import makelabs_bot.model.data_pojo.Contract;
 import makelabs_bot.model.data_pojo.ContractUser;
@@ -207,8 +207,6 @@ public class UserActionHandler implements MessageHandler {
             }
         }
 
-
-        //todo implement InnerPath instead of CommandBuilder
         Log.Info("\tText = " + innerPath.getPath()
                 + "\n\tCommand = " + innerPath.getLast()
                 + "\n\tValid Text = " + validInnerPath.getPath());

@@ -5,7 +5,7 @@
 package makelabs_bot.model;
 
 import makelabs_bot.controllers.MakeLabs_bot;
-import makelabs_bot.helper.Log;
+import helper.Log;
 import makelabs_bot.model.data_pojo.PostWorkData;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -36,7 +36,7 @@ public class Analytics {
                 if (mInstance == null) {
                     mInstance = new Analytics();
                     mInstance.lastunixtime = Calendar.getInstance().getTime().getTime() / 1000;
-                    Log.Info("Analytics successfully initialized into " + mInstance.lastunixtime + ".txt",
+                    Log.Info("Analytics successfully initialized into " + Log.getLogFile(),
                             Log.ANALYTICS);
                 }
             }

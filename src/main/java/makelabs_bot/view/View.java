@@ -4,8 +4,8 @@
 
 package makelabs_bot.view;
 
-import makelabs_bot.helper.InnerPath;
-import makelabs_bot.helper.Log;
+import helper.InnerPath;
+import helper.Log;
 import makelabs_bot.model.Analytics;
 import makelabs_bot.model.data_pojo.ContractUser;
 import makelabs_bot.model.data_pojo.PostWorkData;

@@ -4,8 +4,8 @@
 
 package makelabs_bot.view;
 
-import makelabs_bot.helper.InnerPath;
-import makelabs_bot.helper.Log;
+import helper.InnerPath;
+import helper.Log;
 import makelabs_bot.model.Analytics;
 import org.telegram.telegrambots.meta.api.objects.User;
 

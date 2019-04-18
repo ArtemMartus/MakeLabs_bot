@@ -4,7 +4,7 @@
 
 package makelabs_bot.viewmodel;
 
-import makelabs_bot.helper.Log;
+import helper.Log;
 import makelabs_bot.model.Analytics;
 import makelabs_bot.model.Model;
 import makelabs_bot.model.data_pojo.Contract;

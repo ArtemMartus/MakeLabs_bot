@@ -5,8 +5,8 @@
 package makelabs_bot.model;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import makelabs_bot.helper.InnerPath;
-import makelabs_bot.helper.Log;
+import helper.InnerPath;
+import helper.Log;
 import makelabs_bot.model.data_pojo.Contract;
 import makelabs_bot.model.data_pojo.ContractUser;
 import makelabs_bot.model.data_pojo.PostWorkData;
@@ -25,7 +25,7 @@ public class DatabaseManager {
         Dotenv dotenv = Dotenv.load();
         String password = dotenv.get("DB_PASSWORD");
         String user = dotenv.get("DB_USER");
-        String databaseUri = "jdbc:mysql://" + dotenv.get("DB_URI") + "/";//todo change mysql server uri
+        String databaseUri = "jdbc:mysql://" + dotenv.get("DB_URI") + "/";
 
         if (databaseName == null || databaseName.isEmpty())
             databaseName = dotenv.get("DB_NAME");

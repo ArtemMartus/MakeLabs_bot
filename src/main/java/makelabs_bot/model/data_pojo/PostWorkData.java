@@ -6,8 +6,8 @@ package makelabs_bot.model.data_pojo;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import makelabs_bot.helper.InnerPath;
-import makelabs_bot.helper.Log;
+import helper.InnerPath;
+import helper.Log;
 import makelabs_bot.model.other_pojo.Button;
 
 import java.lang.reflect.Type;

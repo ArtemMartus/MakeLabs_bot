@@ -2,7 +2,7 @@
  * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
  */
 
-package makelabs_bot.helper;
+package helper;
 
 import makelabs_bot.model.DatabaseManager;
 

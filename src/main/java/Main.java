@@ -4,14 +4,15 @@
 
 import io.github.cdimascio.dotenv.Dotenv;
 import makelabs_bot.controllers.MakeLabs_bot;
-import makelabs_bot.helper.Log;
-import manual_payment.SSLPaymentRestService;
+import helper.Log;
+import services.creator.SSLPaymentRestService;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 
 public class Main {
 
     public static void main(String[] args) {
+        //todo create jobs bot
         Log.setShowLevel(Log.EVERYTHING);
         SSLPaymentRestService service = new SSLPaymentRestService();
 

@@ -2,14 +2,16 @@
  * Copyright (c) 2019.  Artem Martus (upsage) All Rights Reserved
  */
 
-package makelabs_bot.helper;
+package helper;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class Log {
     public static final int MAIN = 90;
@@ -22,12 +24,13 @@ public class Log {
     public static final int DATABASE_MANAGER = 67;
     public static final int MODEL = 68;
     private static int level;
-    private static Long logStart = -1L;
+    private static String logStart;
 
     private static void setLogStart() {
-        if (logStart > 0)
+        if (logStart != null)
             return;
-        logStart = Calendar.getInstance().getTimeInMillis() / 1000L;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z");
+        logStart = sdf.format(new Date()) + ".txt";
     }
 
 
@@ -41,7 +44,7 @@ public class Log {
             str = "\t" + str;
             switch (level) {
                 case ANALYTICS:
-                    str = "[ANALYTICS]\t" + str;
+                    str = "[ANALYTICS]\t\t" + str;
                     break;
                 case MAIN:
                     str = "[MAIN]\t\t\t" + str;
@@ -65,7 +68,7 @@ public class Log {
                     str = "[DATABASE_MANAGER]\t" + str;
                     break;
                 case MODEL:
-                    str = "[MODEL]\t" + str;
+                    str = "[MODEL]\t\t\t" + str;
                     break;
                 default:
             }
@@ -76,7 +79,8 @@ public class Log {
         try {
             File logsDir = new File("./logs");
             if (logsDir.mkdir() || (logsDir.exists() && logsDir.isDirectory())) {
-                String logFileName = "./logs/" + logStart + ".txt";
+
+                String logFileName = "./logs/" + logStart;
                 File logFile = new File(logFileName);
                 boolean newFile = logFile.createNewFile();
                 // new file created if newFile == true
@@ -92,5 +96,9 @@ public class Log {
     public static void setShowLevel(int level) {
         setLogStart();
         Log.level = level;
+    }
+
+    public static String getLogFile() {
+        return logStart;
     }
 }

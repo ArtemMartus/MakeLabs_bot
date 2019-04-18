@@ -4,7 +4,7 @@
 
 package makelabs_bot.model;
 
-import makelabs_bot.helper.Log;
+import helper.Log;
 import makelabs_bot.model.data_pojo.Contract;
 import makelabs_bot.model.data_pojo.ContractUser;
 import makelabs_bot.model.data_pojo.PostWorkData;
