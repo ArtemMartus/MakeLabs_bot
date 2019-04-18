@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/BotUsingLeocuslib.iml" filepath="$PROJECT_DIR$/BotUsingLeocuslib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MakeLabs_Bot.iml" filepath="$PROJECT_DIR$/MakeLabs_Bot.iml" />
     </modules>
   </component>
 </project>
